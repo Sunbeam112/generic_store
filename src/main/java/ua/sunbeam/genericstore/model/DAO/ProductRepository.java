@@ -3,18 +3,16 @@ package ua.sunbeam.genericstore.model.DAO;
 import org.springframework.data.repository.CrudRepository;
 import ua.sunbeam.genericstore.model.Product;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface ProductRepository extends CrudRepository<Product, Long> {
 
-    @Override
-    Optional<Product> findById(Long id);
 
-    @Override
-    boolean existsById(Long aLong);
+    void removeById(Long id);
 
-    @Override
-    void deleteById(Long id);
+    List<Product> findByNameContainsIgnoreCase(String name);
+
+    boolean existsByNameContainsIgnoreCase(String name);
 
 
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 
 @Service
 public class ProductService {
+
     private final ProductRepository productRepository;
 
     public ProductService(ProductRepository productRepository) {
@@ -20,9 +21,9 @@ public class ProductService {
         return (List<Product>) products;
     }
 
-    public Product findById(long id) {
-        Optional<Product> product = productRepository.findById(id);
-        return product.orElse(null);
+
+    public void removeById(Long id) {
+        productRepository.removeById(id);
     }
 
 
@@ -34,5 +35,29 @@ public class ProductService {
             productRepository.save(product);
             return true;
         } else return false;
+    }
+
+
+    public Optional<Product> getProductById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public List<Product> getAllProductsByName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return List.of();
+        }
+
+        if (productRepository.existsByNameContainsIgnoreCase(name)) {
+            return productRepository.findByNameContainsIgnoreCase(name);
+        }
+        return List.of();
+    }
+
+
+    public boolean isExistsByName(String name) {
+        if (name != null && !name.trim().isEmpty()) {
+            return productRepository.existsByNameContainsIgnoreCase(name);
+        }
+        return false;
     }
 }

@@ -1,5 +1,6 @@
 package ua.sunbeam.genericstore.service;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
@@ -14,8 +15,14 @@ public class EmailService {
     private String fromAddress;
     @Value("${app.frontend.url}")
     private String frontendURL;
-    private final String template =
-            String.format("\"Please follow the link: %s/auth/v1/verify?token=", frontendURL);
+    private String template;
+
+    @PostConstruct
+    public void init() {
+        template =
+                String.format("\"Please follow the link: %s/auth/v1/verify?token=", frontendURL);
+
+    }
 
 
     private JavaMailSender mailSender;

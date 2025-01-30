@@ -1,5 +1,6 @@
 package ua.sunbeam.genericstore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -22,7 +23,7 @@ public class Product {
     @Column(name = "category", nullable = false)
     private String category;
 
-    @Column(name = "url_photo")
+    @Column(name = "url_photo", length = 2048)
     private String urlPhoto;
 
     @Column(name = "subcategory")
@@ -31,6 +32,7 @@ public class Product {
     @Column(name = "short_description", length = 1024)
     private String shortDescription;
 
+    @JsonIgnore
     @OneToOne(mappedBy = "product", cascade = CascadeType.REMOVE, optional = false, orphanRemoval = true)
     private Inventory inventory;
 
