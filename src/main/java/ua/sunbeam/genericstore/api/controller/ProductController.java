@@ -10,6 +10,7 @@ import ua.sunbeam.genericstore.service.ProductService;
 import java.util.List;
 import java.util.Optional;
 
+
 @RestController
 @RequestMapping("/product")
 public class ProductController {
@@ -20,25 +21,22 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
-
+    @CrossOrigin
     @GetMapping("/all")
     public ResponseEntity<List<Product>> getAllProducts() {
         List<Product> products = productService.findAll();
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
-
-    @GetMapping("/get/{id}")
-    public ResponseEntity<Optional<Product>> getProduct(@PathVariable Long id) {
-        Optional<Product> product = productService.getProductById(id);
-        if (product.isPresent()) {
-            return new ResponseEntity<>(product, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    @GetMapping(value= "/category={input}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String input) {
+        Optional<List<Product>> products;
+        products = productService.getAllProductsByCategory(input);
+        return products.map(productList -> new ResponseEntity<>(productList, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-
-    @GetMapping("/{name}")
+    @GetMapping("/name={name}")
     public ResponseEntity<List<Product>> findProductByNameAll(@PathVariable String name) {
         List<Product> products;
         products = productService.getAllProductsByName(name);
@@ -46,6 +44,21 @@ public class ProductController {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+
+
+    @GetMapping("/id={id}")
+    public ResponseEntity<Product> getProductById(@PathVariable String id) {
+        Optional<Product> product;
+        try{
+        Long parsedID = Long.parseLong(id,10);
+        product = productService.findById(parsedID);
+        }
+        catch (NumberFormatException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
     }
 
 
@@ -60,6 +73,8 @@ public class ProductController {
         return ResponseEntity.ok().build();
 
     }
+
+
 
 
     @RequestMapping(value = "/add", method = RequestMethod.POST)

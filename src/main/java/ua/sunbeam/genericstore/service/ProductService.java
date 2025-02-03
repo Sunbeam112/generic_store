@@ -22,6 +22,10 @@ public class ProductService {
     }
 
 
+    public Optional<Product> findById(Long id) {
+        return productRepository.findById(id);
+    }
+
     public void removeById(Long id) {
         productRepository.removeById(id);
     }
@@ -38,9 +42,7 @@ public class ProductService {
     }
 
 
-    public Optional<Product> getProductById(Long id) {
-        return productRepository.findById(id);
-    }
+
 
     public List<Product> getAllProductsByName(String name) {
         if (name == null || name.trim().isEmpty()) {
@@ -60,4 +62,12 @@ public class ProductService {
         }
         return false;
     }
+
+    public Optional<List<Product>> getAllProductsByCategory(String category) {
+        if (category != null && !category.trim().isEmpty()) {
+            return Optional.ofNullable(productRepository.findByCategoryIgnoreCase(category));
+        }
+        return Optional.empty();
+    }
+
 }

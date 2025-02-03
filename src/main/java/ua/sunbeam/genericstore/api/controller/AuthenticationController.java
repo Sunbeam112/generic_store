@@ -15,6 +15,8 @@ import ua.sunbeam.genericstore.api.model.RegistrationBody;
 import ua.sunbeam.genericstore.model.LocalUser;
 import ua.sunbeam.genericstore.service.UserService;
 
+
+@CrossOrigin(maxAge = 3600)
 @RestController
 @RequestMapping("/auth/v1")
 public class AuthenticationController {
