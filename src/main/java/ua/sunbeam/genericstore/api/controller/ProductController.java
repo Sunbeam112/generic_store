@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.model.Product;
 import ua.sunbeam.genericstore.service.ProductService;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,10 +37,10 @@ public class ProductController {
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @GetMapping("/name={name}")
-    public ResponseEntity<List<Product>> findProductByNameAll(@PathVariable String name) {
+    @GetMapping("/name={input}")
+    public ResponseEntity<List<Product>> findProductByNameAll(@PathVariable String input) {
         List<Product> products;
-        products = productService.getAllProductsByName(name);
+        products = productService.getAllProductsByName(input);
         if (products.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -47,24 +48,25 @@ public class ProductController {
     }
 
 
-    @GetMapping("/id={id}")
-    public ResponseEntity<Product> getProductById(@PathVariable String id) {
-        Optional<Product> product;
+    @GetMapping("/id={input}")
+    public ResponseEntity<Product> getProductById(@PathVariable String input) {
         try{
-        Long parsedID = Long.parseLong(id,10);
-        product = productService.findById(parsedID);
+        Long parsedID = Long.parseLong(input,10);
+        Product product = productService.findById(parsedID);
+        if (product == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        catch (NumberFormatException e) {
+        return new ResponseEntity<>(product, HttpStatus.OK);
+        } catch (NumberFormatException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
     }
 
 
     @Transactional
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable(value = "id") Long id) {
+    public ResponseEntity deleteProduct(@PathVariable(value = "id") Long id) {
         try {
             productService.removeById(id);
         } catch (Exception e) {
@@ -88,4 +90,11 @@ public class ProductController {
     }
 
 
+
+    @GetMapping("/category/all")
+    public ResponseEntity<List<String>> getAllProductsByCategory() {
+        List<String> categories;
+        categories = productService.getAllCategories();
+        return new ResponseEntity<>(categories, HttpStatus.OK);
+    }
 }

@@ -22,8 +22,11 @@ public class ProductService {
     }
 
 
-    public Optional<Product> findById(Long id) {
-        return productRepository.findById(id);
+    public Product findById(Long id) {
+        if(productRepository.existsById(id)){
+            return productRepository.findById(id).get();
+        }
+        return null;
     }
 
     public void removeById(Long id) {
@@ -70,4 +73,7 @@ public class ProductService {
         return Optional.empty();
     }
 
+    public List<String> getAllCategories() {
+        return productRepository.getEveryCategory();
+    }
 }
