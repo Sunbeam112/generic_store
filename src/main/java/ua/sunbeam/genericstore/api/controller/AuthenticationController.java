@@ -27,6 +27,7 @@ public class AuthenticationController {
         this.userService = userService;
     }
 
+    @CrossOrigin
     @PostMapping("/register")
     public ResponseEntity registerUser(@Valid @RequestBody RegistrationBody body) throws UserAlreadyExist, EmailFailureException {
         try {
@@ -40,6 +41,7 @@ public class AuthenticationController {
 
     }
 
+    @CrossOrigin
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) {
         String jwt;
@@ -70,11 +72,13 @@ public class AuthenticationController {
 
     }
 
+    @CrossOrigin
     @GetMapping("/me")
     public LocalUser userProfile(@AuthenticationPrincipal LocalUser user) {
         return user;
     }
 
+    @CrossOrigin
     @PostMapping("/verify")
     public ResponseEntity<LoginResponse> verifyUser(@RequestParam String token) {
         if (userService.verifyUser(token)) {

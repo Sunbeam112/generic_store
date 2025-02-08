@@ -30,7 +30,7 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         String[] allowedToAllPaths = {"/", "/product/all", "/product/add","/product/name=*","/product/category=**",
-                "/product/category/all","/product/id=*",
+                "/product/category/all","/product/id=**",
                 "/all-products.html",
                 "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify"};
 

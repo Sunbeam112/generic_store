@@ -1,6 +1,7 @@
 package ua.sunbeam.genericstore.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import ua.sunbeam.genericstore.model.DAO.ProductRepository;
 import ua.sunbeam.genericstore.model.Product;
 
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@CrossOrigin
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -22,9 +24,13 @@ public class ProductService {
     }
 
 
+
+
     public Product findById(Long id) {
+        Optional<Product> product;
         if(productRepository.existsById(id)){
-            return productRepository.findById(id).get();
+            product = productRepository.getProductById(id);
+            return product.orElse(null);
         }
         return null;
     }
