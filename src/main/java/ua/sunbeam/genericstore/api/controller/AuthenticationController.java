@@ -6,13 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import ua.sunbeam.genericstore.error.EmailFailureException;
-import ua.sunbeam.genericstore.error.UserAlreadyExist;
-import ua.sunbeam.genericstore.error.UserNotVerifiedException;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.LoginResponse;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
+import ua.sunbeam.genericstore.error.EmailFailureException;
+import ua.sunbeam.genericstore.error.UserAlreadyExist;
+import ua.sunbeam.genericstore.error.UserNotVerifiedException;
 import ua.sunbeam.genericstore.model.LocalUser;
+import ua.sunbeam.genericstore.service.UserDetailsService;
 import ua.sunbeam.genericstore.service.UserService;
 
 
@@ -22,11 +23,14 @@ import ua.sunbeam.genericstore.service.UserService;
 public class AuthenticationController {
     @Autowired
     private final UserService userService;
+    private final UserDetailsService userDetailsService;
 
-    public AuthenticationController(UserService userService) {
+    public AuthenticationController(UserService userService, UserDetailsService userDetailsService) {
         this.userService = userService;
+        this.userDetailsService = userDetailsService;
     }
 
+    @CrossOrigin
     @PostMapping("/register")
     public ResponseEntity registerUser(@Valid @RequestBody RegistrationBody body) throws UserAlreadyExist, EmailFailureException {
         try {
@@ -40,6 +44,7 @@ public class AuthenticationController {
 
     }
 
+    @CrossOrigin
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) {
         String jwt;
@@ -70,11 +75,14 @@ public class AuthenticationController {
 
     }
 
+    @CrossOrigin
     @GetMapping("/me")
-    public LocalUser userProfile(@AuthenticationPrincipal LocalUser user) {
-        return user;
+    public ResponseEntity<LocalUser> userProfile(@AuthenticationPrincipal LocalUser user) {
+        return ResponseEntity.ok(user);
+
     }
 
+    @CrossOrigin
     @PostMapping("/verify")
     public ResponseEntity<LoginResponse> verifyUser(@RequestParam String token) {
         if (userService.verifyUser(token)) {

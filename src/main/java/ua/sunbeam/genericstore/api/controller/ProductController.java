@@ -47,7 +47,7 @@ public class ProductController {
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
-
+@CrossOrigin
     @GetMapping("/id={input}")
     public ResponseEntity<Product> getProductById(@PathVariable String input) {
         try{
