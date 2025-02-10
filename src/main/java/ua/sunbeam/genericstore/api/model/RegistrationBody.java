@@ -7,12 +7,14 @@ public class RegistrationBody {
     @Email
     @NotNull
     @NotBlank
+    @NotEmpty
     @Size(min = 4, max = 320)
 
     private String email;
 
     @NotNull
     @NotBlank
+    @NotEmpty
     @Size(min = 8, max = 32)
     @Pattern(regexp = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$")
     private String password;

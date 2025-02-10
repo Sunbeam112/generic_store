@@ -1,10 +1,10 @@
 package ua.sunbeam.genericstore.api.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.LoginResponse;
@@ -21,18 +21,17 @@ import ua.sunbeam.genericstore.service.UserService;
 @RestController
 @RequestMapping("/auth/v1")
 public class AuthenticationController {
-    @Autowired
+
     private final UserService userService;
-    private final UserDetailsService userDetailsService;
+
 
     public AuthenticationController(UserService userService, UserDetailsService userDetailsService) {
         this.userService = userService;
-        this.userDetailsService = userDetailsService;
     }
 
     @CrossOrigin
     @PostMapping("/register")
-    public ResponseEntity registerUser(@Valid @RequestBody RegistrationBody body) throws UserAlreadyExist, EmailFailureException {
+    public ResponseEntity<String> registerUser(@Valid @RequestBody RegistrationBody body) throws UserAlreadyExist, EmailFailureException {
         try {
             userService.registerUser(body);
             return ResponseEntity.status(HttpStatus.OK).build();
@@ -40,6 +39,8 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (EmailFailureException ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (MethodArgumentNotValidException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
     }
@@ -62,6 +63,8 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         } catch (EmailFailureException ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         if (jwt == null) {
@@ -74,6 +77,13 @@ public class AuthenticationController {
         }
 
     }
+
+
+    @GetMapping("/logout")
+    public ResponseEntity<String> logoutUser() {
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
 
     @CrossOrigin
     @GetMapping("/me")

@@ -1,18 +1,19 @@
 package ua.sunbeam.genericstore.service;
 
 import jakarta.transaction.Transactional;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.RequestBody;
+import ua.sunbeam.genericstore.api.model.LoginBody;
+import ua.sunbeam.genericstore.api.model.RegistrationBody;
 import ua.sunbeam.genericstore.api.security.JWTUtils;
 import ua.sunbeam.genericstore.error.EmailFailureException;
 import ua.sunbeam.genericstore.error.UserAlreadyExist;
 import ua.sunbeam.genericstore.error.UserNotVerifiedException;
 import ua.sunbeam.genericstore.model.DAO.UserRepository;
 import ua.sunbeam.genericstore.model.DAO.VerificationTokenRepository;
-import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.model.LocalUser;
-import ua.sunbeam.genericstore.api.model.RegistrationBody;
 import ua.sunbeam.genericstore.model.VerificationToken;
 
 import java.sql.Timestamp;
@@ -31,15 +32,17 @@ public class UserService {
     private final EncryptionService encryptionService;
     private final JWTUtils jwtUtils;
 
-    public UserService(UserRepository userRepository, EmailService emailService, VerificationTokenRepository verificationTokenRepository, EncryptionService encryptionService, JWTUtils jwtUtils) {
+    public UserService(UserRepository userRepository, EmailService emailService, VerificationTokenRepository verificationTokenRepository,
+                       EncryptionService encryptionService, JWTUtils jwtUtils) {
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.verificationTokenRepository = verificationTokenRepository;
         this.encryptionService = encryptionService;
         this.jwtUtils = jwtUtils;
+
     }
 
-    public String loginUser(LoginBody body) throws UsernameNotFoundException, EmailFailureException, UserNotVerifiedException {
+    public String loginUser(@Valid LoginBody body) throws Exception {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(body.getEmail());
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
@@ -65,7 +68,8 @@ public class UserService {
 
     }
 
-    public LocalUser registerUser(@RequestBody RegistrationBody body) throws UserAlreadyExist, EmailFailureException {
+    public LocalUser registerUser(@Valid @RequestBody RegistrationBody body)
+            throws UserAlreadyExist, EmailFailureException, MethodArgumentNotValidException {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(body.getEmail());
         if (opUser.isPresent()) {
             throw new UserAlreadyExist();
