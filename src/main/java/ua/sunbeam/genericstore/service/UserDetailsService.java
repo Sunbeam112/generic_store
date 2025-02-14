@@ -27,7 +27,7 @@ public class UserDetailsService implements org.springframework.security.core.use
             throw new UsernameNotFoundException("Could not find user with email: " + email);
         }
         LocalUser user = opUser.get();
-        if (Objects.equals(user.getEmail(), "admin")) {
+        if (Objects.equals(user.getEmail(), "admin@sb.ua")) {
             return new org.springframework.security.core.userdetails.User(
                     user.getEmail(), user.getPassword(),
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));

@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.model.Product;
 import ua.sunbeam.genericstore.service.ProductService;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +21,7 @@ public class ProductController {
     public ProductController(ProductService productService) {
         this.productService = productService;
     }
+
     @CrossOrigin
     @GetMapping("/all")
     public ResponseEntity<List<Product>> getAllProducts() {
@@ -29,7 +29,7 @@ public class ProductController {
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
-    @GetMapping(value= "/category={input}")
+    @GetMapping(value = "/category={input}")
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String input) {
         Optional<List<Product>> products;
         products = productService.getAllProductsByCategory(input);
@@ -47,16 +47,16 @@ public class ProductController {
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
-@CrossOrigin
+    @CrossOrigin
     @GetMapping("/id={input}")
     public ResponseEntity<Product> getProductById(@PathVariable String input) {
-        try{
-        Long parsedID = Long.parseLong(input,10);
-        Product product = productService.findById(parsedID);
-        if (product == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(product, HttpStatus.OK);
+        try {
+            Long parsedID = Long.parseLong(input, 10);
+            Product product = productService.findById(parsedID);
+            if (product == null) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(product, HttpStatus.OK);
         } catch (NumberFormatException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
@@ -77,8 +77,7 @@ public class ProductController {
     }
 
 
-
-
+    @CrossOrigin
     @RequestMapping(value = "/add", method = RequestMethod.POST)
     @ResponseBody
     @ResponseStatus(HttpStatus.CREATED)
@@ -88,7 +87,6 @@ public class ProductController {
         }
         return new ResponseEntity<>(HttpStatus.CONFLICT);
     }
-
 
 
     @GetMapping("/category/all")

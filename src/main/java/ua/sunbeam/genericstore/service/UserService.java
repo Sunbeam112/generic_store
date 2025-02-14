@@ -3,7 +3,8 @@ package ua.sunbeam.genericstore.service;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.RequestBody;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
@@ -68,20 +69,22 @@ public class UserService {
 
     }
 
-    public LocalUser registerUser(@Valid @RequestBody RegistrationBody body)
-            throws UserAlreadyExist, EmailFailureException, MethodArgumentNotValidException {
+    public void registerUser(@Valid @RequestBody RegistrationBody body, BindingResult result)
+            throws UserAlreadyExist, EmailFailureException {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(body.getEmail());
         if (opUser.isPresent()) {
             throw new UserAlreadyExist();
         }
-
+        List<FieldError> errors = result.getFieldErrors();
+        if (result.hasErrors()) {
+            return;
+        }
         LocalUser user = new LocalUser();
         user.setEmail(body.getEmail());
         user.setPassword(encryptionService.encryptPassword(body.getPassword()));
         VerificationToken token = createVerificationToken(user);
         emailService.sendEmailConformationMessage(token);
-        return userRepository.save(user);
-
+        userRepository.save(user);
     }
 
     private VerificationToken createVerificationToken(LocalUser user) {

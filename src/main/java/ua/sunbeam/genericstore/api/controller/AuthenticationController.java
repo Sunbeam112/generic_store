@@ -4,16 +4,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.LoginResponse;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
+import ua.sunbeam.genericstore.error.DataIsNotVerified;
 import ua.sunbeam.genericstore.error.EmailFailureException;
 import ua.sunbeam.genericstore.error.UserAlreadyExist;
 import ua.sunbeam.genericstore.error.UserNotVerifiedException;
 import ua.sunbeam.genericstore.model.LocalUser;
-import ua.sunbeam.genericstore.service.UserDetailsService;
 import ua.sunbeam.genericstore.service.UserService;
 
 
@@ -23,26 +23,34 @@ import ua.sunbeam.genericstore.service.UserService;
 public class AuthenticationController {
 
     private final UserService userService;
+    private final ValidationErrorsParser validationErrorsParser;
 
-
-    public AuthenticationController(UserService userService, UserDetailsService userDetailsService) {
+    public AuthenticationController(
+            UserService userService,
+            ValidationErrorsParser validationErrorsParser) {
         this.userService = userService;
+
+        this.validationErrorsParser = validationErrorsParser;
     }
 
     @CrossOrigin
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@Valid @RequestBody RegistrationBody body) throws UserAlreadyExist, EmailFailureException {
+    public ResponseEntity<Object> registerUser
+            (@Valid @RequestBody RegistrationBody body, BindingResult result) {
         try {
-            userService.registerUser(body);
+            userService.registerUser(body, result);
+            if (result.hasErrors()) {
+                throw new DataIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
+            }
+
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (UserAlreadyExist ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (EmailFailureException ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (MethodArgumentNotValidException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        } catch (DataIsNotVerified ex) {
+            return ResponseEntity.badRequest().body(ex.getErrors());
         }
-
     }
 
     @CrossOrigin
