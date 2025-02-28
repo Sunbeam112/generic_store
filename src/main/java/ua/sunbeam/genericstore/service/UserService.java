@@ -9,13 +9,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
 import ua.sunbeam.genericstore.api.security.JWTUtils;
-import ua.sunbeam.genericstore.error.EmailFailureException;
-import ua.sunbeam.genericstore.error.UserAlreadyExist;
-import ua.sunbeam.genericstore.error.UserNotVerifiedException;
+import ua.sunbeam.genericstore.error.*;
 import ua.sunbeam.genericstore.model.DAO.UserRepository;
 import ua.sunbeam.genericstore.model.DAO.VerificationTokenRepository;
 import ua.sunbeam.genericstore.model.LocalUser;
+import ua.sunbeam.genericstore.model.ResetPasswordToken;
 import ua.sunbeam.genericstore.model.VerificationToken;
+import ua.sunbeam.genericstore.service.EmailService.EmailVerificationService;
+import ua.sunbeam.genericstore.service.EmailService.ResetPasswordEmailService;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -28,19 +29,29 @@ public class UserService {
     private final int COOLDOWN_IN_MS = 300000;
 
     final UserRepository userRepository;
-    private final EmailService emailService;
+
     private final VerificationTokenRepository verificationTokenRepository;
     private final EncryptionService encryptionService;
+    private final RPTService rptService;
     private final JWTUtils jwtUtils;
+    private final EmailVerificationService emailVerificationService;
+    private final ResetPasswordEmailService resetPasswordEmailService;
 
-    public UserService(UserRepository userRepository, EmailService emailService, VerificationTokenRepository verificationTokenRepository,
-                       EncryptionService encryptionService, JWTUtils jwtUtils) {
+    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository,
+                       EncryptionService encryptionService,
+                       RPTService resetPasswordTokenService,
+                       JWTUtils jwtUtils,
+                       EmailVerificationService emailVerificationService,
+                       EmailVerificationService emailVerificationService1,
+                       ResetPasswordEmailService resetPasswordEmailService) {
         this.userRepository = userRepository;
-        this.emailService = emailService;
+
         this.verificationTokenRepository = verificationTokenRepository;
         this.encryptionService = encryptionService;
+        this.rptService = resetPasswordTokenService;
         this.jwtUtils = jwtUtils;
-
+        this.emailVerificationService = emailVerificationService1;
+        this.resetPasswordEmailService = resetPasswordEmailService;
     }
 
     public String loginUser(@Valid LoginBody body) throws Exception {
@@ -58,7 +69,7 @@ public class UserService {
                     if (resend) {
                         VerificationToken verificationToken = createVerificationToken(user);
                         verificationTokenRepository.save(verificationToken);
-                        emailService.sendEmailConformationMessage(verificationToken);
+                        emailVerificationService.sendEmailConformationMessage(verificationToken);
                     }
                     throw new UserNotVerifiedException(resend);
                 }
@@ -83,7 +94,7 @@ public class UserService {
         user.setEmail(body.getEmail());
         user.setPassword(encryptionService.encryptPassword(body.getPassword()));
         VerificationToken token = createVerificationToken(user);
-        emailService.sendEmailConformationMessage(token);
+        emailVerificationService.sendEmailConformationMessage(token);
         userRepository.save(user);
     }
 
@@ -111,4 +122,54 @@ public class UserService {
         }
         return false;
     }
+
+
+    public boolean SetUserPasswordByEmail(String email, String password) throws EmailsNotVerifiedException {
+        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
+        if (opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            if (user.isEmailVerified()) {
+                user.setPassword(encryptionService.encryptPassword(password));
+                return true;
+            } else {
+                throw new EmailsNotVerifiedException();
+            }
+        }
+        return false;
+    }
+
+    public boolean IsUserExists(String email) {
+        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
+        return opUser.isPresent();
+    }
+
+    public boolean IsUserEmailVerified(String email) {
+        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
+        if (opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            return user.isEmailVerified();
+        }
+        return false;
+    }
+
+    public ResetPasswordToken ResetPassword(String email) throws EmailsNotVerifiedException, EmailFailureException, PasswordResetCooldown {
+        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
+        if (opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            if (user.isEmailVerified()) {
+                try {
+                    ResetPasswordToken rpt = rptService.TryToCreateRPT(user);
+                    resetPasswordEmailService.sendResetPasswordEmail(rpt);
+                    return rpt;
+                } catch (EmailFailureException ex) {
+                    throw new EmailFailureException();
+                }
+
+            } else {
+                throw new EmailsNotVerifiedException();
+            }
+        }
+        return null;
+    }
+
 }

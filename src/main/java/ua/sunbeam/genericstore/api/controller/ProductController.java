@@ -70,7 +70,7 @@ public class ProductController {
         try {
             productService.removeById(id);
         } catch (Exception e) {
-            return new ResponseEntity(e, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(e, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return ResponseEntity.ok().build();
 
@@ -83,7 +83,7 @@ public class ProductController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Product> addProduct(@RequestBody Product product) {
         if (productService.addProduct(product)) {
-            return new ResponseEntity<>(product, HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.CREATED);
         }
         return new ResponseEntity<>(HttpStatus.CONFLICT);
     }

@@ -48,6 +48,7 @@ public class JWTUtils {
     }
 
     public String getEmailFromToken(String token) {
-        return JWT.decode(token).getClaim(claim).asString();
+        DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
+        return jwt.getClaim(claim).asString();
     }
 }

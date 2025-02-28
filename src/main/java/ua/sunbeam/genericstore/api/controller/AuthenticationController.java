@@ -1,19 +1,21 @@
 package ua.sunbeam.genericstore.api.controller;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.LoginResponse;
+import ua.sunbeam.genericstore.api.model.PasswordResetRequestBody;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
-import ua.sunbeam.genericstore.error.DataIsNotVerified;
-import ua.sunbeam.genericstore.error.EmailFailureException;
-import ua.sunbeam.genericstore.error.UserAlreadyExist;
-import ua.sunbeam.genericstore.error.UserNotVerifiedException;
+import ua.sunbeam.genericstore.error.*;
 import ua.sunbeam.genericstore.model.LocalUser;
+import ua.sunbeam.genericstore.model.ResetPasswordToken;
+import ua.sunbeam.genericstore.service.RPTService;
 import ua.sunbeam.genericstore.service.UserService;
 
 
@@ -24,15 +26,17 @@ public class AuthenticationController {
 
     private final UserService userService;
     private final ValidationErrorsParser validationErrorsParser;
+    private final RPTService resetPasswordTokenService;
 
-    public AuthenticationController(
-            UserService userService,
-            ValidationErrorsParser validationErrorsParser) {
+    public AuthenticationController(UserService userService,
+                                    ValidationErrorsParser validationErrorsParser,
+                                    RPTService RPTService) {
         this.userService = userService;
-
         this.validationErrorsParser = validationErrorsParser;
+        this.resetPasswordTokenService = RPTService;
     }
 
+    @Transactional
     @CrossOrigin
     @PostMapping("/register")
     public ResponseEntity<Object> registerUser
@@ -43,7 +47,7 @@ public class AuthenticationController {
                 throw new DataIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
             }
 
-            return ResponseEntity.status(HttpStatus.OK).build();
+            return new ResponseEntity<>(HttpStatus.CREATED);
         } catch (UserAlreadyExist ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (EmailFailureException ex) {
@@ -93,13 +97,13 @@ public class AuthenticationController {
     }
 
 
-    @CrossOrigin
     @GetMapping("/me")
-    public ResponseEntity<LocalUser> userProfile(@AuthenticationPrincipal LocalUser user) {
-        return ResponseEntity.ok(user);
+    public UserDetails getUserData(@AuthenticationPrincipal LocalUser user) {
+        return user;
 
     }
 
+    @Transactional
     @CrossOrigin
     @PostMapping("/verify")
     public ResponseEntity<LoginResponse> verifyUser(@RequestParam String token) {
@@ -107,5 +111,28 @@ public class AuthenticationController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
+
+
+    @CrossOrigin
+    @PostMapping("/forgot_password")
+    public ResponseEntity<Object> forgotPassword(@RequestParam String email) throws EmailsNotVerifiedException {
+        try {
+            ResetPasswordToken token = userService.ResetPassword(email);
+            return new ResponseEntity<>(token, HttpStatus.OK);
+        } catch (EmailsNotVerifiedException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
+        } catch (EmailFailureException ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        } catch (PasswordResetCooldown ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("PASSWORD_RESET_COOLDOWN");
+        }
+    }
+
+    @CrossOrigin
+    @PostMapping
+    public ResponseEntity<Object> changeUserPassword(@Valid @RequestBody PasswordResetRequestBody resetBody) {
+        //TODO: validate token, only then proceed
+        return ResponseEntity.ok().build();
     }
 }

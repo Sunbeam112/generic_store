@@ -3,15 +3,17 @@ package ua.sunbeam.genericstore.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
 @Table(name = "local_user")
-public class LocalUser {
+public class LocalUser implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,6 +40,23 @@ public class LocalUser {
 
     @OneToMany(mappedBy = "localUser", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
+
+    @OneToMany(mappedBy = "localUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id desc")
+    private List<ResetPasswordToken> resetPasswordTokens = new ArrayList<>();
+
+    public List<ResetPasswordToken> getResetPasswordTokens() {
+        return resetPasswordTokens;
+    }
+
+    public void setResetPasswordTokens(List<ResetPasswordToken> resetPasswordTokens) {
+        this.resetPasswordTokens = resetPasswordTokens;
+    }
+
+    public void addResetPasswordToken(ResetPasswordToken resetPasswordToken) {
+        resetPasswordTokens.add(resetPasswordToken);
+    }
+
 
     public List<Address> getAddresses() {
         return addresses;
@@ -71,8 +90,42 @@ public class LocalUser {
         isEmailVerified = emailVerified;
     }
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
     public String getPassword() {
         return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+//        return UserDetails.super.isAccountNonExpired();
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+//        return UserDetails.super.isAccountNonLocked();
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+//        return UserDetails.super.isCredentialsNonExpired();
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+//        return UserDetails.super.isEnabled();
+        return true;
     }
 
     public void setPassword(String password) {
