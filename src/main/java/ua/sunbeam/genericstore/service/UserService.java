@@ -2,6 +2,9 @@ package ua.sunbeam.genericstore.service;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -25,11 +28,9 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+    final UserRepository userRepository;
     //5 minutes
     private final int COOLDOWN_IN_MS = 300000;
-
-    final UserRepository userRepository;
-
     private final VerificationTokenRepository verificationTokenRepository;
     private final EncryptionService encryptionService;
     private final RPTService rptService;
@@ -124,16 +125,24 @@ public class UserService {
     }
 
 
-    public boolean SetUserPasswordByEmail(String email, String password) throws EmailsNotVerifiedException {
+    public boolean SetUserPasswordByEmail(String email,
+                                          @NotNull @NotBlank @Size(min = 8, max = 64) String password,
+                                          BindingResult result) throws EmailsNotVerifiedException {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
-        if (opUser.isPresent()) {
-            LocalUser user = opUser.get();
-            if (user.isEmailVerified()) {
-                user.setPassword(encryptionService.encryptPassword(password));
-                return true;
-            } else {
-                throw new EmailsNotVerifiedException();
+        List<FieldError> errors = result.getFieldErrors();
+        if (result.hasErrors()) {
+            return false;
+        } else {
+            if (opUser.isPresent()) {
+                LocalUser user = opUser.get();
+                if (user.isEmailVerified()) {
+                    user.setPassword(encryptionService.encryptPassword(password));
+                    return true;
+                } else {
+                    throw new EmailsNotVerifiedException();
+                }
             }
+
         }
         return false;
     }

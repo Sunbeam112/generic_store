@@ -4,4 +4,8 @@ import org.springframework.data.repository.CrudRepository;
 import ua.sunbeam.genericstore.model.ResetPasswordToken;
 
 public interface ResetPasswordTokenRepository extends CrudRepository<ResetPasswordToken, Long> {
+    ResetPasswordToken getByTokenIgnoreCase(String token);
+
+    @Override
+    boolean existsById(Long aLong);
 }

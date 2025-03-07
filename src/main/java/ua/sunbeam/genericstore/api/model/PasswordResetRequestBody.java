@@ -8,12 +8,11 @@ import jakarta.validation.constraints.Size;
 public class PasswordResetRequestBody {
     @NotNull
     @NotBlank
-    @Size(min = 8, max = 256)
+    @Size(min = 8, max = 64)
     private String newPassword;
-
-
+    @NotBlank
+    @NotNull
     private String token;
-
 
     public String getNewPassword() {
         return newPassword;

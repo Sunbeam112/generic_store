@@ -2,6 +2,8 @@ package ua.sunbeam.genericstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.ColumnDefault;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.sql.Timestamp;
 
@@ -23,6 +25,18 @@ public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
 
     @Column(name = "token", nullable = false, unique = true, length = 1024)
     private String token;
+
+    @Column(name = "is_token_used", nullable = false)
+    @ColumnDefault("false")
+    private Boolean isTokenUsed = false;
+
+    public Boolean getIsTokenUsed() {
+        return isTokenUsed;
+    }
+
+    public void setIsTokenUsed(Boolean isTokenUsed) {
+        this.isTokenUsed = isTokenUsed;
+    }
 
     public String getToken() {
         return token;

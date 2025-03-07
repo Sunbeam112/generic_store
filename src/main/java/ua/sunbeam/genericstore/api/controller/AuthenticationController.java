@@ -26,14 +26,14 @@ public class AuthenticationController {
 
     private final UserService userService;
     private final ValidationErrorsParser validationErrorsParser;
-    private final RPTService resetPasswordTokenService;
+    private final RPTService rtpService;
 
     public AuthenticationController(UserService userService,
                                     ValidationErrorsParser validationErrorsParser,
                                     RPTService RPTService) {
         this.userService = userService;
         this.validationErrorsParser = validationErrorsParser;
-        this.resetPasswordTokenService = RPTService;
+        this.rtpService = RPTService;
     }
 
     @Transactional
@@ -48,12 +48,12 @@ public class AuthenticationController {
             }
 
             return new ResponseEntity<>(HttpStatus.CREATED);
-        } catch (UserAlreadyExist ex) {
+        } catch (UserAlreadyExist e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        } catch (EmailFailureException ex) {
+        } catch (EmailFailureException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (DataIsNotVerified ex) {
-            return ResponseEntity.badRequest().body(ex.getErrors());
+        } catch (DataIsNotVerified e) {
+            return ResponseEntity.badRequest().body(e.getErrors());
         }
     }
 
@@ -64,16 +64,16 @@ public class AuthenticationController {
         try {
             jwt = userService.loginUser(loginBody);
 
-        } catch (UserNotVerifiedException ex) {
+        } catch (UserNotVerifiedException e) {
             LoginResponse response = new LoginResponse();
             response.setSuccess(false);
             String reason = "USER_NOT_VERIFIED";
-            if (ex.isNewEmailSent()) {
+            if (e.isNewEmailSent()) {
                 reason += "_NEW_EMAIL_SENT";
             }
             response.setFailureReason(reason);
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-        } catch (EmailFailureException ex) {
+        } catch (EmailFailureException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
@@ -100,7 +100,6 @@ public class AuthenticationController {
     @GetMapping("/me")
     public UserDetails getUserData(@AuthenticationPrincipal LocalUser user) {
         return user;
-
     }
 
     @Transactional
@@ -120,19 +119,38 @@ public class AuthenticationController {
         try {
             ResetPasswordToken token = userService.ResetPassword(email);
             return new ResponseEntity<>(token, HttpStatus.OK);
-        } catch (EmailsNotVerifiedException ex) {
+        } catch (EmailsNotVerifiedException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
-        } catch (EmailFailureException ex) {
+        } catch (EmailFailureException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (PasswordResetCooldown ex) {
+        } catch (PasswordResetCooldown e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("PASSWORD_RESET_COOLDOWN");
         }
     }
 
     @CrossOrigin
-    @PostMapping
-    public ResponseEntity<Object> changeUserPassword(@Valid @RequestBody PasswordResetRequestBody resetBody) {
-        //TODO: validate token, only then proceed
-        return ResponseEntity.ok().build();
+    @PostMapping("/reset_password")
+    public ResponseEntity<Object> changeUserPassword(@Valid @RequestBody PasswordResetRequestBody resetBody, BindingResult result) {
+        boolean isValid = rtpService.VerifyRPT(resetBody.getToken());
+        if (isValid) {
+            ResetPasswordToken token = rtpService.getTokenByToken(resetBody.getToken());
+            try {
+                boolean isPasswordChanged = userService.SetUserPasswordByEmail(
+                        token.getLocalUser().getEmail(), resetBody.getNewPassword(), result);
+                if (result.hasErrors()) {
+                    throw new DataIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
+                }
+                if (isPasswordChanged) {
+                    rtpService.RemoveToken(token);
+                    return ResponseEntity.ok().build();
+                }
+
+            } catch (EmailsNotVerifiedException e) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
+            } catch (DataIsNotVerified e) {
+                return ResponseEntity.badRequest().body(e.getErrors());
+            }
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 }

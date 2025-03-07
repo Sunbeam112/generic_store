@@ -33,7 +33,8 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         String[] allowedToAllPaths = {"/product/all", "/product/name=**", "/product/category=**",
-                "/product/category/all", "/product/id=**", "/product/id=**", "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify"};
+                "/product/category/all", "/product/id=**", "/product/id=**", "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify",
+                "/auth/v1/reset_password**", "auth/v1/forgot_password"};
 
         String[] allowedToAdminPaths = {"/product/add", "/product/delete/**", "/product/update/**"};
         String[] allowedToUserPaths = {"/auth/v1/me"};
@@ -64,7 +65,7 @@ public class WebSecurityConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         //Make the below setting as * to allow connection from any hos
         corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST"));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedHeaders(List.of("*"));
         corsConfiguration.setMaxAge(3600L);
@@ -73,43 +74,5 @@ public class WebSecurityConfig {
         return source;
     }
 
-
-    /*
-     *@Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        String[] allowedToAllPaths = {"/", "/product/all", "/product/add", "/product/name=*", "/product/category=**",
-                "/product/category/all", "/product/id=**",
-                "/all-products.html",
-                "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify"};
-
-        http.addFilterBefore(jwtRequestFilter, AuthenticationFilter.class);
-
-        http.csrf(AbstractHttpConfigurer::disable)
-                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/auth/v1/me").authenticated()
-                        .requestMatchers(allowedToAllPaths).permitAll()
-                );
-        http.formLogin(withDefaults());
-        http.httpBasic(withDefaults());
-        return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        //Make the below setting as * to allow connection from any hos
-        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST"));
-        corsConfiguration.setAllowCredentials(true);
-        corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
-        return source;
-    }
-     *
-     *
-     * */
 
 }
