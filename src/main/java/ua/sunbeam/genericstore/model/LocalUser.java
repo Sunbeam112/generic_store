@@ -45,6 +45,17 @@ public class LocalUser implements UserDetails {
     @OrderBy("id desc")
     private List<ResetPasswordToken> resetPasswordTokens = new ArrayList<>();
 
+    @OneToMany(mappedBy = "localUser", orphanRemoval = true)
+    private List<UserOrder> userOrders = new ArrayList<>();
+
+    public List<UserOrder> getUserOrders() {
+        return userOrders;
+    }
+
+    public void setUserOrders(List<UserOrder> userOrders) {
+        this.userOrders = userOrders;
+    }
+
     public List<ResetPasswordToken> getResetPasswordTokens() {
         return resetPasswordTokens;
     }
@@ -99,6 +110,10 @@ public class LocalUser implements UserDetails {
         return password;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
     public String getUsername() {
         return email;
@@ -127,11 +142,6 @@ public class LocalUser implements UserDetails {
 //        return UserDetails.super.isEnabled();
         return true;
     }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
 
     public List<VerificationToken> getVerificationTokens() {
         return verificationTokens;
