@@ -1,5 +1,6 @@
 package ua.sunbeam.genericstore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
@@ -14,6 +15,7 @@ public class UserOrder {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "local_user_id")
     private LocalUser localUser;
@@ -21,6 +23,7 @@ public class UserOrder {
     @Column(name = "date_created", nullable = false)
     private Timestamp dateCreated;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItems> orderItems = new ArrayList<>();
 
@@ -30,6 +33,14 @@ public class UserOrder {
 
     public void setOrderItems(List<OrderItems> orderItems) {
         this.orderItems = orderItems;
+    }
+
+    public Long getUserID() {
+        return localUser.getId();
+    }
+
+    public List<OrderItems> getOrderProducts() {
+        return this.orderItems;
     }
 
     public Timestamp getDateCreated() {

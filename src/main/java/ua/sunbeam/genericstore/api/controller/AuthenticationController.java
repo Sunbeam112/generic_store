@@ -44,7 +44,7 @@ public class AuthenticationController {
         try {
             userService.registerUser(body, result);
             if (result.hasErrors()) {
-                throw new DataIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
+                throw new DetaiIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
             }
 
             return new ResponseEntity<>(HttpStatus.CREATED);
@@ -52,7 +52,7 @@ public class AuthenticationController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (EmailFailureException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        } catch (DataIsNotVerified e) {
+        } catch (DetaiIsNotVerified e) {
             return ResponseEntity.badRequest().body(e.getErrors());
         }
     }
@@ -138,7 +138,7 @@ public class AuthenticationController {
                 boolean isPasswordChanged = userService.SetUserPasswordByEmail(
                         token.getLocalUser().getEmail(), resetBody.getNewPassword(), result);
                 if (result.hasErrors()) {
-                    throw new DataIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
+                    throw new DetaiIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
                 }
                 if (isPasswordChanged) {
                     rtpService.RemoveToken(token);
@@ -147,7 +147,7 @@ public class AuthenticationController {
 
             } catch (EmailsNotVerifiedException e) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
-            } catch (DataIsNotVerified e) {
+            } catch (DetaiIsNotVerified e) {
                 return ResponseEntity.badRequest().body(e.getErrors());
             }
         }

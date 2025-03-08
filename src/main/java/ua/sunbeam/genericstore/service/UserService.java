@@ -147,10 +147,16 @@ public class UserService {
         return false;
     }
 
-    public boolean IsUserExists(String email) {
+    public boolean IsUserExistsByEmail(String email) {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         return opUser.isPresent();
     }
+
+    public boolean IsUserExistsByID(Long id) {
+        Optional<LocalUser> opUser = userRepository.findById(id);
+        return opUser.isPresent();
+    }
+
 
     public boolean IsUserEmailVerified(String email) {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
@@ -181,4 +187,9 @@ public class UserService {
         return null;
     }
 
+
+    public LocalUser GetUserByID(Long id) {
+        Optional<LocalUser> opUser = userRepository.findById(id);
+        return opUser.orElse(null);
+    }
 }

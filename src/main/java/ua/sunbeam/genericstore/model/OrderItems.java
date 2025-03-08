@@ -11,10 +11,6 @@ public class OrderItems {
     private Long id;
 
 
-    @OneToOne(orphanRemoval = true)
-    @JoinColumn(name = "product_id")
-    private Product product;
-
     @ManyToOne(cascade = CascadeType.ALL, optional = false)
     @JoinColumn(name = "user_order_id", nullable = false)
     private UserOrder userOrder;
@@ -24,6 +20,18 @@ public class OrderItems {
 
     @Column(name = "is_dispatched", nullable = false)
     private Boolean isDispatched = false;
+
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
 
     public Boolean getIsDispatched() {
         return isDispatched;
@@ -47,14 +55,6 @@ public class OrderItems {
 
     public void setUserOrder(UserOrder userOrder) {
         this.userOrder = userOrder;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
     }
 
     public Long getId() {

@@ -36,7 +36,7 @@ public class WebSecurityConfig {
                 "/product/category/all", "/product/id=**", "/product/id=**", "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify",
                 "/auth/v1/reset_password**", "auth/v1/forgot_password"};
 
-        String[] allowedToAdminPaths = {"/product/add", "/product/delete/**", "/product/update/**"};
+        String[] allowedToAdminPaths = {"/product/add", "/product/delete/**", "/product/update/**", "/admin/order/create**", "/admin/order/all-orders"};
         String[] allowedToUserPaths = {"/auth/v1/me"};
 
         http.csrf(AbstractHttpConfigurer::disable)
