@@ -19,7 +19,7 @@ public class EmailVerificationService extends BasicMailService {
 
     public void sendEmailConformationMessage(VerificationToken token) throws EmailFailureException {
         SimpleMailMessage message = createSimpleMailMessage();
-        message.setTo(token.getLocalUser().getEmail());
+        message.setTo(token.getLocalUser().getUsername());
         message.setSubject("Please confirm your email");
         message.setText(String.format("<h1>Test</h1><p>smaller text</p>\n%s\n%s?token=%s", greeting, url, token.getToken()));
         try {

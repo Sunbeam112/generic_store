@@ -2,9 +2,13 @@ package ua.sunbeam.genericstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "product")
 public class Product implements Serializable {
@@ -38,75 +42,5 @@ public class Product implements Serializable {
     @OneToOne(mappedBy = "product", cascade = CascadeType.REMOVE, optional = false, orphanRemoval = true)
     private Inventory inventory;
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getUrlPhoto() {
-        return urlPhoto;
-    }
-
-    public void setUrlPhoto(String urlPhoto) {
-        this.urlPhoto = urlPhoto;
-    }
-
-    public String getSubcategory() {
-        return subcategory;
-    }
-
-    public void setSubcategory(String subcategory) {
-        this.subcategory = subcategory;
-    }
-
-    public String getShortDescription() {
-        return shortDescription;
-    }
-
-    public void setShortDescription(String shortDescription) {
-        this.shortDescription = shortDescription;
-    }
-
-    public Inventory getInventory() {
-        return inventory;
-    }
-
-    public void setInventory(Inventory inventory) {
-        this.inventory = inventory;
-    }
 }

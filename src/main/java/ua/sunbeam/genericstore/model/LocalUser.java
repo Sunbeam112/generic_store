@@ -2,8 +2,11 @@ package ua.sunbeam.genericstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
@@ -15,11 +18,15 @@ import java.util.List;
 @Table(name = "local_user")
 public class LocalUser implements UserDetails {
 
+    @Setter
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Getter
+    @Setter
     @Column(name = "email", nullable = false, unique = true, length = 320)
     private String email;
 
@@ -28,70 +35,38 @@ public class LocalUser implements UserDetails {
     @ColumnDefault("false")
     private boolean isEmailVerified;
 
+    @Setter
     @JsonIgnore
     @Column(name = "password", nullable = false, length = 1000)
     private String password;
 
 
+    @Getter
     @JsonIgnore
     @OneToMany(mappedBy = "localUser", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id desc")
     private List<VerificationToken> verificationTokens = new ArrayList<>();
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "localUser", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "localUser", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id desc")
     private List<ResetPasswordToken> resetPasswordTokens = new ArrayList<>();
 
-    @OneToMany(mappedBy = "localUser", orphanRemoval = true)
+    @Setter
+    @Getter
+    @OneToMany(mappedBy = "localUser", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserOrder> userOrders = new ArrayList<>();
-
-    public List<UserOrder> getUserOrders() {
-        return userOrders;
-    }
-
-    public void setUserOrders(List<UserOrder> userOrders) {
-        this.userOrders = userOrders;
-    }
-
-    public List<ResetPasswordToken> getResetPasswordTokens() {
-        return resetPasswordTokens;
-    }
-
-    public void setResetPasswordTokens(List<ResetPasswordToken> resetPasswordTokens) {
-        this.resetPasswordTokens = resetPasswordTokens;
-    }
 
     public void addResetPasswordToken(ResetPasswordToken resetPasswordToken) {
         resetPasswordTokens.add(resetPasswordToken);
     }
 
-
-    public List<Address> getAddresses() {
-        return addresses;
-    }
-
-    public void setAddresses(List<Address> addresses) {
-        this.addresses = addresses;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
 
     public boolean isEmailVerified() {
         return isEmailVerified;
@@ -101,17 +76,15 @@ public class LocalUser implements UserDetails {
         isEmailVerified = emailVerified;
     }
 
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
     }
 
+    @Override
     public String getPassword() {
         return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     @Override
@@ -143,11 +116,4 @@ public class LocalUser implements UserDetails {
         return true;
     }
 
-    public List<VerificationToken> getVerificationTokens() {
-        return verificationTokens;
-    }
-
-    public void setVerificationTokens(List<VerificationToken> verificationTokens) {
-        this.verificationTokens = verificationTokens;
-    }
 }

@@ -1,77 +1,68 @@
 package ua.sunbeam.genericstore.service;
 
+import jakarta.transaction.Transactional;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
-import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
 import ua.sunbeam.genericstore.error.EmailsNotVerifiedException;
 import ua.sunbeam.genericstore.error.UserNotExistsException;
 import ua.sunbeam.genericstore.model.DAO.OrderItemsRepository;
 import ua.sunbeam.genericstore.model.LocalUser;
-import ua.sunbeam.genericstore.model.OrderItems;
-import ua.sunbeam.genericstore.model.OrderRepository;
 import ua.sunbeam.genericstore.model.UserOrder;
+import ua.sunbeam.genericstore.model.DAO.UserOrderRepository;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@Transactional
 public class OrderService {
 
-    private final OrderRepository orderRepo;
     private final UserService userService;
-    private final OrderItemsRepository orderItemsRepository;
+    private final OrderItemsRepository OrderItemRepository;
+    private final UserOrderRepository userOrderRepository;
 
-    public OrderService(OrderRepository orderRepo, UserService userService,
-                        OrderItemsRepository orderItemsRepository) {
-        this.orderRepo = orderRepo;
+    public OrderService(UserService userService, OrderItemsRepository orderItemRepository,
+                        UserOrderRepository userOrderRepository) {
         this.userService = userService;
-        this.orderItemsRepository = orderItemsRepository;
+        OrderItemRepository = orderItemRepository;
+        this.userOrderRepository = userOrderRepository;
     }
 
 
-    private List<OrderItems> saveOrderedItems(List<ProductToOrderBody> products) throws IllegalArgumentException {
-        if (products == null || products.isEmpty()) {
-            throw new IllegalArgumentException("Products can't be null or empty");
+    public boolean deleteOrder(Long id) {
+        if (userOrderRepository.existsById(id)) {
+            userOrderRepository.deleteById(id);
+            return true;
         }
-        List<OrderItems> items = new ArrayList<>();
-        for (ProductToOrderBody product : products) {
-            if (product.getProductID() > 0 && product.getQuantity() > 0) {
-                OrderItems item = new OrderItems();
-                item.setId(product.getProductID());
-                item.setQuantity(product.getQuantity());
-                item.setIsDispatched(false);
-                items.add(item);
-                orderItemsRepository.save(item);
-            } else {
-                throw new IllegalArgumentException(
-                        String.format("Product ID %d in quantity %d is not valid",
-                                product.getProductID(), product.getQuantity()));
-            }
-
-        }
-
-        return items;
+        return false;
     }
 
-    public void createOrder(Long userID, List<ProductToOrderBody> products) throws EmailsNotVerifiedException {
-        if (userID != null) {
-            if (userService.IsUserExistsByID(userID)) {
-                LocalUser user = userService.GetUserByID(userID);
-                if (userService.IsUserEmailVerified(user.getEmail())) {
-                    UserOrder order = new UserOrder();
-                    order.setDateCreated(new Timestamp(System.currentTimeMillis()));
-                    List<OrderItems> orderItems = saveOrderedItems(products);
-                    order.setOrderItems(orderItems);
-                    orderRepo.save(order);
-                } else throw new EmailsNotVerifiedException();
-            }
-        }
-        throw new UserNotExistsException();
+    public List<UserOrder> getAllOrders() {
+        return userOrderRepository.findAll();
     }
 
-    public Iterable<UserOrder> getAllOrders() {
-        Iterable<UserOrder> orders;
-        orders = orderRepo.findAll();
-        return orders;
+    public UserOrder getOrderById(Long id) {
+        Optional<UserOrder> userOrderOptional = userOrderRepository.findById(id);
+        return userOrderOptional.orElse(null);
+    }
+
+    public UserOrder saveOrder(UserOrder userOrder) {
+        return userOrderRepository.save(userOrder);
+    }
+
+    public UserOrder createOrder(Long userId) throws UserNotExistsException, EmailsNotVerifiedException {
+        if (userOrderRepository.existsById(userId)) {
+            LocalUser user = userService.GetUserByID(userId);
+            if (user.isEmailVerified()) {
+                UserOrder userOrder = new UserOrder();
+                userOrder.setDate(new Timestamp(System.currentTimeMillis()));
+                userOrder.setLocalUser(user);
+                userOrder.setStatus("Pending");
+                return userOrderRepository.save(userOrder);
+
+            } else throw new EmailsNotVerifiedException();
+        } else throw new UserNotExistsException();
+
     }
 }

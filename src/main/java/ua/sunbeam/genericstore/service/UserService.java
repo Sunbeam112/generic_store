@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -61,7 +62,7 @@ public class UserService {
             LocalUser user = opUser.get();
             if (encryptionService.decryptPassword(body.getPassword(), user.getPassword())) {
                 if (user.isEmailVerified()) {
-                    return jwtUtils.generateToken(user.getEmail());
+                    return jwtUtils.generateToken(user.getUsername());
                 } else {
                     List<VerificationToken> verificationTokens = user.getVerificationTokens();
                     boolean resend = verificationTokens.isEmpty() ||
@@ -190,6 +191,11 @@ public class UserService {
 
     public LocalUser GetUserByID(Long id) {
         Optional<LocalUser> opUser = userRepository.findById(id);
+        return opUser.orElse(null);
+    }
+
+    public UserDetails GetUserByEmail(String email) {
+        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         return opUser.orElse(null);
     }
 }

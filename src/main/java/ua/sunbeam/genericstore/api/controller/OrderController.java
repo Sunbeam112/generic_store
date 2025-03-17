@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
 import ua.sunbeam.genericstore.error.EmailsNotVerifiedException;
 import ua.sunbeam.genericstore.error.UserNotExistsException;
-import ua.sunbeam.genericstore.model.OrderItems;
-import ua.sunbeam.genericstore.model.Product;
 import ua.sunbeam.genericstore.model.UserOrder;
+import ua.sunbeam.genericstore.service.OrderItemsService;
 import ua.sunbeam.genericstore.service.OrderService;
 
 import java.util.List;
@@ -20,18 +19,22 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderItemsService orderItemsService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderItemsService orderItemsService) {
         this.orderService = orderService;
+        this.orderItemsService = orderItemsService;
     }
 
     @CrossOrigin
     @PostMapping("/create")
-    public ResponseEntity<Object> createOrder(@RequestParam Long userID,
-                                              @Valid @RequestBody List<ProductToOrderBody> products) {
+    public ResponseEntity<Object> createOrder(@RequestParam Long userID) {
         try {
-            orderService.createOrder(userID, products);
-            return new ResponseEntity<>(HttpStatus.CREATED);
+            UserOrder order = orderService.createOrder(userID);
+            if (order != null) {
+                return new ResponseEntity<>(HttpStatus.CREATED);
+            }
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (EmailsNotVerifiedException e) {
             return ResponseEntity.badRequest().body("EMAIL_NOT_VERIFIED");
         } catch (UserNotExistsException e) {
@@ -42,15 +45,31 @@ public class OrderController {
 
     }
 
+    @CrossOrigin
+    @PostMapping("/set")
+    public ResponseEntity<Object> fillOrder(Long orderID, @Valid @RequestBody List<ProductToOrderBody> products) {
+        UserOrder order = orderService.getOrderById(orderID);
+        if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        try {
+            boolean isAdded = orderItemsService.addItemsToOrder(products, order.getId());
+            if (isAdded) return new ResponseEntity<>(HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
 
     @CrossOrigin
     @GetMapping("/all-orders")
     public ResponseEntity<Object> getAllOrders() {
-        List<UserOrder> orders = (List<UserOrder>) orderService.getAllOrders();
+        List<UserOrder> orders = orderService.getAllOrders();
         if (orders.isEmpty()) {
             return ResponseEntity.ok("NO_ORDERS");
         }
-       
+
         return ResponseEntity.ok(orders);
     }
+
+
 }
