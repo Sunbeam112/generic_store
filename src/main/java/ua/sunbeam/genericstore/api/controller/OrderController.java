@@ -46,25 +46,7 @@ public class OrderController {
 
     }
 
-    @CrossOrigin
-    @PostMapping("/set")
-    public ResponseEntity<Object> fillOrder(@RequestParam Long orderID, @Valid @RequestBody List<ProductToOrderBody> products, BindingResult result) {
-        UserOrder order = orderService.getOrderById(orderID);
-        if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-
-        try {
-            boolean isAdded = orderItemsService.addItemsToOrder(products, order.getId(), result);
-            result.getFieldErrors();
-            if (result.hasErrors()) {
-                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-            }
-            if (isAdded) return new ResponseEntity<>(HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    }
-
+    
     @CrossOrigin
     @GetMapping("/all-orders")
     public ResponseEntity<Object> getAllOrders() {

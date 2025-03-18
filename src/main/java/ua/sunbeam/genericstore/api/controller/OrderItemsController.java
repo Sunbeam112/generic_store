@@ -1,11 +1,11 @@
 package ua.sunbeam.genericstore.api.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
 import ua.sunbeam.genericstore.model.DAO.OrderItemsRepository;
 import ua.sunbeam.genericstore.model.OrderItem;
 import ua.sunbeam.genericstore.model.UserOrder;
@@ -28,8 +28,8 @@ public class OrderItemsController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<List<OrderItem>> getAllOrderItems(@RequestParam Long orderId) {
-        UserOrder order = orderService.getOrderById(orderId);
+    public ResponseEntity<List<OrderItem>> getAllOrderItems(@RequestParam Long orderID) {
+        UserOrder order = orderService.getOrderById(orderID);
         if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         List<OrderItem> orderItems;
         orderItems = orderItemsService.getAllOrderItemsByOrderId(order.getId());
@@ -37,5 +37,26 @@ public class OrderItemsController {
 
         return new ResponseEntity<>(orderItems, HttpStatus.OK);
     }
+
+
+    @CrossOrigin
+    @PostMapping("/set")
+    public ResponseEntity<Object> fillOrder(@RequestParam Long orderID, @Valid @RequestBody List<ProductToOrderBody> products, BindingResult result) {
+        UserOrder order = orderService.getOrderById(orderID);
+        if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        try {
+            boolean isAdded = orderItemsService.addItemsToOrder(products, order.getId(), result);
+            result.getFieldErrors();
+            if (result.hasErrors()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
+            if (isAdded) return new ResponseEntity<>(HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+    }
+
 
 }

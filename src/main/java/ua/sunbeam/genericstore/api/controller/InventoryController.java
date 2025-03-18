@@ -9,17 +9,5 @@ import ua.sunbeam.genericstore.service.ProductService;
 @RequestMapping("/admin/inventory")
 public class InventoryController {
 
-    private final ProductService productService;
-
-    public InventoryController(ProductService productService) {
-        this.productService = productService;
-    }
-
-    public int getProductQuantity(Long productID) {
-        if (productID == null || productID <= 0) return -1;
-        Product product = productService.findById(productID);
-        if (product == null) return -1;
-        if (product.getInventory() == null) return 0;
-        return product.getInventory().getQuantity();
-    }
 }
+
