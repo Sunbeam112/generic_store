@@ -4,7 +4,11 @@ package ua.sunbeam.genericstore.api.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public class PasswordResetRequestBody {
     @NotNull
     @NotBlank
@@ -14,20 +18,5 @@ public class PasswordResetRequestBody {
     @NotNull
     private String token;
 
-    public String getNewPassword() {
-        return newPassword;
-    }
 
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
-
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
 }

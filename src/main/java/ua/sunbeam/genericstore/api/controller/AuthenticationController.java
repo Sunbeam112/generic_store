@@ -4,7 +4,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
@@ -14,7 +13,6 @@ import ua.sunbeam.genericstore.api.model.LoginResponse;
 import ua.sunbeam.genericstore.api.model.PasswordResetRequestBody;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
 import ua.sunbeam.genericstore.error.*;
-import ua.sunbeam.genericstore.model.LocalUser;
 import ua.sunbeam.genericstore.model.ResetPasswordToken;
 import ua.sunbeam.genericstore.service.RPTService;
 import ua.sunbeam.genericstore.service.UserService;
@@ -31,10 +29,10 @@ public class AuthenticationController {
 
     public AuthenticationController(UserService userService,
                                     ValidationErrorsParser validationErrorsParser,
-                                    RPTService RPTService) {
+                                    RPTService rptService) {
         this.userService = userService;
         this.validationErrorsParser = validationErrorsParser;
-        this.rtpService = RPTService;
+        this.rtpService = rptService;
     }
 
     @Transactional
@@ -45,7 +43,7 @@ public class AuthenticationController {
         try {
             userService.registerUser(body, result);
             if (result.hasErrors()) {
-                throw new DetaiIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
+                throw new DetaiIsNotVerified(validationErrorsParser.parseErrorsFrom(result));
             }
 
             return new ResponseEntity<>(HttpStatus.CREATED);
@@ -100,7 +98,7 @@ public class AuthenticationController {
 
     @GetMapping("/me")
     public UserDetails getUserData() {
-        return userService.GetUserByEmail((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        return userService.getUserByEmail((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     }
 
     @Transactional
@@ -118,7 +116,7 @@ public class AuthenticationController {
     @PostMapping("/forgot_password")
     public ResponseEntity<Object> forgotPassword(@RequestParam String email) throws EmailsNotVerifiedException {
         try {
-            ResetPasswordToken token = userService.ResetPassword(email);
+            ResetPasswordToken token = userService.resetPassword(email);
             return new ResponseEntity<>(token, HttpStatus.OK);
         } catch (EmailsNotVerifiedException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
@@ -132,17 +130,17 @@ public class AuthenticationController {
     @CrossOrigin
     @PostMapping("/reset_password")
     public ResponseEntity<Object> changeUserPassword(@Valid @RequestBody PasswordResetRequestBody resetBody, BindingResult result) {
-        boolean isValid = rtpService.VerifyRPT(resetBody.getToken());
+        boolean isValid = rtpService.verifyRPT(resetBody.getToken());
         if (isValid) {
             ResetPasswordToken token = rtpService.getTokenByToken(resetBody.getToken());
             try {
-                boolean isPasswordChanged = userService.SetUserPasswordByEmail(
+                boolean isPasswordChanged = userService.setUserPasswordByEmail(
                         token.getLocalUser().getEmail(), resetBody.getNewPassword(), result);
                 if (result.hasErrors()) {
-                    throw new DetaiIsNotVerified(validationErrorsParser.ParseErrorsFrom(result));
+                    throw new DetaiIsNotVerified(validationErrorsParser.parseErrorsFrom(result));
                 }
                 if (isPasswordChanged) {
-                    rtpService.RemoveToken(token);
+                    rtpService.removeToken(token);
                     return ResponseEntity.ok().build();
                 }
 

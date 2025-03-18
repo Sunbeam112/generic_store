@@ -1,11 +1,9 @@
 package ua.sunbeam.genericstore.service;
 
 import jakarta.transaction.Transactional;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 import ua.sunbeam.genericstore.error.EmailsNotVerifiedException;
 import ua.sunbeam.genericstore.error.UserNotExistsException;
-import ua.sunbeam.genericstore.model.DAO.OrderItemsRepository;
 import ua.sunbeam.genericstore.model.LocalUser;
 import ua.sunbeam.genericstore.model.UserOrder;
 import ua.sunbeam.genericstore.model.DAO.UserOrderRepository;
@@ -19,13 +17,12 @@ import java.util.Optional;
 public class OrderService {
 
     private final UserService userService;
-    private final OrderItemsRepository OrderItemRepository;
+    private final UserOrderRepository orderRepository;
     private final UserOrderRepository userOrderRepository;
 
-    public OrderService(UserService userService, OrderItemsRepository orderItemRepository,
-                        UserOrderRepository userOrderRepository) {
+    public OrderService(UserService userService, UserOrderRepository orderRepository, UserOrderRepository userOrderRepository) {
         this.userService = userService;
-        OrderItemRepository = orderItemRepository;
+        this.orderRepository = orderRepository;
         this.userOrderRepository = userOrderRepository;
     }
 
@@ -51,9 +48,9 @@ public class OrderService {
         return userOrderRepository.save(userOrder);
     }
 
-    public UserOrder createOrder(Long userId) throws UserNotExistsException, EmailsNotVerifiedException {
-        if (userOrderRepository.existsById(userId)) {
-            LocalUser user = userService.GetUserByID(userId);
+    public UserOrder createOrder(Long userID) throws UserNotExistsException, EmailsNotVerifiedException {
+        if (userOrderRepository.existsById(userID)) {
+            LocalUser user = userService.getUserByID(userID);
             if (user.isEmailVerified()) {
                 UserOrder userOrder = new UserOrder();
                 userOrder.setDate(new Timestamp(System.currentTimeMillis()));
@@ -64,5 +61,12 @@ public class OrderService {
             } else throw new EmailsNotVerifiedException();
         } else throw new UserNotExistsException();
 
+    }
+
+    public List<UserOrder> getAllOrdersForUser(Long userID) {
+        if (userService.isUserExistsByID(userID)) {
+            return orderRepository.getAllOrdersByUserIdOrderByDateAsc(userID);
+        }
+        return null;
     }
 }

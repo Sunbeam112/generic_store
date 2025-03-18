@@ -12,7 +12,7 @@ import java.util.Map;
 @Component
 public class ValidationErrorsParser {
 
-    public Map<String, List<String>> ParseErrorsFrom(BindingResult bindingResult) {
+    public Map<String, List<String>> parseErrorsFrom(BindingResult bindingResult) {
         Map<String, List<String>> errorsMap = new HashMap<>();
 
         for (FieldError fieldError : bindingResult.getFieldErrors()) {

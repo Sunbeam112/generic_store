@@ -8,7 +8,6 @@ import jakarta.validation.constraints.Size;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.RequestBody;
 import ua.sunbeam.genericstore.api.model.LoginBody;
 import ua.sunbeam.genericstore.api.model.RegistrationBody;
@@ -29,9 +28,9 @@ import java.util.Optional;
 @Service
 public class UserService {
 
-    final UserRepository userRepository;
     //5 minutes
-    private final int COOLDOWN_IN_MS = 300000;
+    private static final int COOLDOWN_IN_MS = 300000;
+    final UserRepository userRepository;
     private final VerificationTokenRepository verificationTokenRepository;
     private final EncryptionService encryptionService;
     private final RPTService rptService;
@@ -39,24 +38,17 @@ public class UserService {
     private final EmailVerificationService emailVerificationService;
     private final ResetPasswordEmailService resetPasswordEmailService;
 
-    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository,
-                       EncryptionService encryptionService,
-                       RPTService resetPasswordTokenService,
-                       JWTUtils jwtUtils,
-                       EmailVerificationService emailVerificationService,
-                       EmailVerificationService emailVerificationService1,
-                       ResetPasswordEmailService resetPasswordEmailService) {
+    public UserService(UserRepository userRepository, VerificationTokenRepository verificationTokenRepository, EncryptionService encryptionService, RPTService rptService, JWTUtils jwtUtils, EmailVerificationService emailVerificationService, ResetPasswordEmailService resetPasswordEmailService) {
         this.userRepository = userRepository;
-
         this.verificationTokenRepository = verificationTokenRepository;
         this.encryptionService = encryptionService;
-        this.rptService = resetPasswordTokenService;
+        this.rptService = rptService;
         this.jwtUtils = jwtUtils;
-        this.emailVerificationService = emailVerificationService1;
+        this.emailVerificationService = emailVerificationService;
         this.resetPasswordEmailService = resetPasswordEmailService;
     }
 
-    public String loginUser(@Valid LoginBody body) throws Exception {
+    public String loginUser(@Valid LoginBody body) throws UserNotVerifiedException, EmailFailureException {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(body.getEmail());
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
@@ -88,7 +80,7 @@ public class UserService {
         if (opUser.isPresent()) {
             throw new UserAlreadyExist();
         }
-        List<FieldError> errors = result.getFieldErrors();
+        result.getFieldErrors();
         if (result.hasErrors()) {
             return;
         }
@@ -126,11 +118,11 @@ public class UserService {
     }
 
 
-    public boolean SetUserPasswordByEmail(String email,
+    public boolean setUserPasswordByEmail(String email,
                                           @NotNull @NotBlank @Size(min = 8, max = 64) String password,
                                           BindingResult result) throws EmailsNotVerifiedException {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
-        List<FieldError> errors = result.getFieldErrors();
+        result.getFieldErrors();
         if (result.hasErrors()) {
             return false;
         } else {
@@ -148,18 +140,18 @@ public class UserService {
         return false;
     }
 
-    public boolean IsUserExistsByEmail(String email) {
+    public boolean isUserExistsByEmail(String email) {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         return opUser.isPresent();
     }
 
-    public boolean IsUserExistsByID(Long id) {
+    public boolean isUserExistsByID(Long id) {
         Optional<LocalUser> opUser = userRepository.findById(id);
         return opUser.isPresent();
     }
 
 
-    public boolean IsUserEmailVerified(String email) {
+    public boolean isUserEmailVerified(String email) {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
@@ -168,13 +160,13 @@ public class UserService {
         return false;
     }
 
-    public ResetPasswordToken ResetPassword(String email) throws EmailsNotVerifiedException, EmailFailureException, PasswordResetCooldown {
+    public ResetPasswordToken resetPassword(String email) throws EmailsNotVerifiedException, EmailFailureException, PasswordResetCooldown {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
             if (user.isEmailVerified()) {
                 try {
-                    ResetPasswordToken rpt = rptService.TryToCreateRPT(user);
+                    ResetPasswordToken rpt = rptService.tryToCreateRPT(user);
                     resetPasswordEmailService.sendResetPasswordEmail(rpt);
                     return rpt;
                 } catch (EmailFailureException ex) {
@@ -189,12 +181,12 @@ public class UserService {
     }
 
 
-    public LocalUser GetUserByID(Long id) {
+    public LocalUser getUserByID(Long id) {
         Optional<LocalUser> opUser = userRepository.findById(id);
         return opUser.orElse(null);
     }
 
-    public UserDetails GetUserByEmail(String email) {
+    public UserDetails getUserByEmail(String email) {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         return opUser.orElse(null);
     }

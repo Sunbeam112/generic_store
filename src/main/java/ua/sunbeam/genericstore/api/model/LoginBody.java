@@ -3,7 +3,9 @@ package ua.sunbeam.genericstore.api.model;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
+@Getter
 public class LoginBody {
     @NotNull
     @NotBlank
@@ -13,11 +15,4 @@ public class LoginBody {
     @NotBlank
     private String password;
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
 }

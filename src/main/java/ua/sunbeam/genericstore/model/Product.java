@@ -40,7 +40,7 @@ public class Product implements Serializable {
 
     @JsonIgnore
     @OneToOne(mappedBy = "product", cascade = CascadeType.REMOVE, optional = false, orphanRemoval = true)
-    private Inventory inventory;
+    private transient Inventory inventory;
 
 
 }

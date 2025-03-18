@@ -3,6 +3,7 @@ package ua.sunbeam.genericstore.api.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
 import ua.sunbeam.genericstore.error.EmailsNotVerifiedException;
@@ -47,12 +48,16 @@ public class OrderController {
 
     @CrossOrigin
     @PostMapping("/set")
-    public ResponseEntity<Object> fillOrder(Long orderID, @Valid @RequestBody List<ProductToOrderBody> products) {
+    public ResponseEntity<Object> fillOrder(@RequestParam Long orderID, @Valid @RequestBody List<ProductToOrderBody> products, BindingResult result) {
         UserOrder order = orderService.getOrderById(orderID);
         if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
         try {
-            boolean isAdded = orderItemsService.addItemsToOrder(products, order.getId());
+            boolean isAdded = orderItemsService.addItemsToOrder(products, order.getId(), result);
+            result.getFieldErrors();
+            if (result.hasErrors()) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }
             if (isAdded) return new ResponseEntity<>(HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -68,6 +73,17 @@ public class OrderController {
             return ResponseEntity.ok("NO_ORDERS");
         }
 
+        return ResponseEntity.ok(orders);
+    }
+
+
+    @CrossOrigin
+    @GetMapping("/all-orders/user")
+    public ResponseEntity<List<UserOrder>> getAllOrdersForUser(@RequestParam Long userID) {
+        List<UserOrder> orders = orderService.getAllOrdersForUser(userID);
+        if (orders.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
         return ResponseEntity.ok(orders);
     }
 

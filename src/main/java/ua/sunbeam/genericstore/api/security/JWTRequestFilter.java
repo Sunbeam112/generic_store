@@ -1,12 +1,10 @@
 package ua.sunbeam.genericstore.api.security;
 
-import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ua.sunbeam.genericstore.model.DAO.UserRepository;
 import ua.sunbeam.genericstore.model.LocalUser;
-import ua.sunbeam.genericstore.service.UserDetailsService;
+import ua.sunbeam.genericstore.service.userDetailsService;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -26,9 +24,9 @@ public class JWTRequestFilter extends OncePerRequestFilter {
 
 
     private final UserRepository userRepository;
-    private final UserDetailsService userDetailsService;
+    private final userDetailsService userDetailsService;
 
-    public JWTRequestFilter(JWTUtils jwtUtils, UserRepository userRepository, UserDetailsService userDetailsService) {
+    public JWTRequestFilter(JWTUtils jwtUtils, UserRepository userRepository, userDetailsService userDetailsService) {
         this.jwtUtils = jwtUtils;
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
@@ -49,7 +47,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
 
                     if (opUser.isPresent()) {
                         LocalUser user = opUser.get();
-                        if(user.isEmailVerified()) {
+                        if (user.isEmailVerified()) {
                             UserDetails userDetails = userDetailsService.loadUserByUsername(emailFromToken);
                             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                     emailFromToken, userDetails.getPassword(), userDetails.getAuthorities());
@@ -57,7 +55,6 @@ public class JWTRequestFilter extends OncePerRequestFilter {
                             SecurityContextHolder.getContext().setAuthentication(authentication);
                         }
                     }
-                } catch (JWTDecodeException ignored) {
 
                 } catch (JWTVerificationException ex) {
                     response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT Token");

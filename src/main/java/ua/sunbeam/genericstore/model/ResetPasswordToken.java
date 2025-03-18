@@ -2,11 +2,15 @@ package ua.sunbeam.genericstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.sql.Timestamp;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "reset_password_token")
 public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
@@ -30,46 +34,6 @@ public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
     @ColumnDefault("false")
     private Boolean isTokenUsed = false;
 
-    public Boolean getIsTokenUsed() {
-        return isTokenUsed;
-    }
-
-    public void setIsTokenUsed(Boolean isTokenUsed) {
-        this.isTokenUsed = isTokenUsed;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public LocalUser getLocalUser() {
-        return localUser;
-    }
-
-    public void setLocalUser(LocalUser localUser) {
-        this.localUser = localUser;
-    }
-
-    public Timestamp getExpiryDateInMilliseconds() {
-        return expiryDateInMilliseconds;
-    }
-
-    public void setExpiryDateInMilliseconds(Timestamp createdDate) {
-        this.expiryDateInMilliseconds = createdDate;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
 
     @Override
     public int compareTo(ResetPasswordToken rpt) {
@@ -79,4 +43,5 @@ public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
 
         return getExpiryDateInMilliseconds().compareTo(rpt.getExpiryDateInMilliseconds());
     }
+    
 }

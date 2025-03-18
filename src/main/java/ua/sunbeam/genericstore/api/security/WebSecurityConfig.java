@@ -13,7 +13,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import ua.sunbeam.genericstore.service.UserDetailsService;
+import ua.sunbeam.genericstore.service.userDetailsService;
 
 import java.util.List;
 
@@ -23,9 +23,9 @@ import java.util.List;
 public class WebSecurityConfig {
 
     private final JWTRequestFilter jwtRequestFilter;
-    private final UserDetailsService userDetailsService;
+    private final userDetailsService userDetailsService;
 
-    public WebSecurityConfig(JWTRequestFilter jwtRequestFilter, UserDetailsService userDetailsService) {
+    public WebSecurityConfig(JWTRequestFilter jwtRequestFilter, userDetailsService userDetailsService) {
         this.jwtRequestFilter = jwtRequestFilter;
         this.userDetailsService = userDetailsService;
     }
@@ -36,7 +36,7 @@ public class WebSecurityConfig {
                 "/product/category/all", "/product/id=**", "/product/id=**", "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify",
                 "/auth/v1/reset_password**", "auth/v1/forgot_password"};
 
-        String[] allowedToAdminPaths = {"/product/add", "/product/delete/**", "/product/update/**", "/admin/order/create**", "/admin/order/all-orders"};
+        String[] allowedToAdminPaths = {"/product/add", "/product/delete/**", "/product/update/**", "/admin/order/create**", "/admin/order/**"};
         String[] allowedToUserPaths = {"/auth/v1/me"};
 
         http.csrf(AbstractHttpConfigurer::disable)

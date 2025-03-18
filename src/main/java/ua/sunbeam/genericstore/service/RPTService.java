@@ -26,28 +26,28 @@ public class RPTService {
     }
 
 
-    public ResetPasswordToken TryToCreateRPT(LocalUser user) {
+    public ResetPasswordToken tryToCreateRPT(LocalUser user) {
         List<ResetPasswordToken> tokens = user.getResetPasswordTokens();
         if (tokens.isEmpty()) {
-            return GenerateRPT(user);
+            return generateRPT(user);
         }
-        if (IsRTPNotExpired(tokens.getLast())) throw new PasswordResetCooldown();
+        if (isRTPNotExpired(tokens.getLast())) throw new PasswordResetCooldown();
         else {
-            return GenerateRPT(user);
+            return generateRPT(user);
         }
     }
 
-    public boolean IsRTPNotExpired(ResetPasswordToken resetPasswordToken) {
+    public boolean isRTPNotExpired(ResetPasswordToken resetPasswordToken) {
         return resetPasswordToken.getExpiryDateInMilliseconds().after(new Timestamp(System.currentTimeMillis()));
     }
 
-    public boolean VerifyRPT(String token_input) {
-        if (token_input == null) return false;
-        if (token_input.length() != 36) return false;
-        ResetPasswordToken token = getTokenByToken(token_input);
+    public boolean verifyRPT(String tokenInput) {
+        if (tokenInput == null) return false;
+        if (tokenInput.length() != 36) return false;
+        ResetPasswordToken token = getTokenByToken(tokenInput);
         if (token == null) return false;
-        if (token.getIsTokenUsed()) return false;
-        if (IsRTPNotExpired(token)) {
+        if (Boolean.TRUE.equals(token.getIsTokenUsed())) return false;
+        if (isRTPNotExpired(token)) {
             LocalUser user = token.getLocalUser();
             if (user.isEmailVerified()) {
                 return user.getResetPasswordTokens().contains(token);
@@ -56,7 +56,7 @@ public class RPTService {
         return false;
     }
 
-    public ResetPasswordToken GenerateRPT(LocalUser user) {
+    public ResetPasswordToken generateRPT(LocalUser user) {
         ResetPasswordToken rpt = new ResetPasswordToken();
         rpt.setExpiryDateInMilliseconds(new Timestamp(System.currentTimeMillis() + expiryInMillisecond));
         rpt.setLocalUser(user);
@@ -73,7 +73,7 @@ public class RPTService {
     }
 
 
-    public void RemoveToken(ResetPasswordToken token) {
+    public void removeToken(ResetPasswordToken token) {
         if (rptRepository.existsById(token.getId()))
             rptRepository.delete(token);
     }

@@ -66,7 +66,7 @@ public class ProductController {
 
     @Transactional
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity deleteProduct(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") Long id) {
         try {
             productService.removeById(id);
         } catch (Exception e) {
@@ -78,8 +78,7 @@ public class ProductController {
 
 
     @CrossOrigin
-    @RequestMapping(value = "/add", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/add")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Product> addProduct(@RequestBody Product product) {
         if (productService.addProduct(product)) {

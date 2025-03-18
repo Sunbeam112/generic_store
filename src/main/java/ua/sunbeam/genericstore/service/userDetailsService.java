@@ -12,12 +12,12 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Component
-public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
+public class userDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
 
 
     private final UserRepository userRepository;
 
-    public UserDetailsService(UserRepository userRepository) {
+    public userDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 

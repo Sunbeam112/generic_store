@@ -1,11 +1,10 @@
 package ua.sunbeam.genericstore.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.proxy.HibernateProxy;
 
 import java.sql.Timestamp;
-import java.util.Objects;
 
 @Entity
 @Table(name = "order_item")
@@ -18,6 +17,8 @@ public class OrderItem {
     @Column(name = "id")
     private Long id;
 
+    @Column(name = "product_id", insertable = false, updatable = false)
+    private Long productId;
 
     @Column(name = "quantity")
     private int quantity;
@@ -28,13 +29,16 @@ public class OrderItem {
     @Column(name = "date_dispatched")
     private Timestamp dateDispatched;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "order_id", nullable = false)
     private UserOrder userOrder;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REMOVE, CascadeType.REFRESH}, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
 
 }
 

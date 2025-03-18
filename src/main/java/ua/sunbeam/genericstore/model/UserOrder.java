@@ -39,6 +39,9 @@ public class UserOrder {
     @JoinColumn(name = "local_user_id", nullable = false)
     private LocalUser localUser;
 
+    @Column(name = "local_user_id", insertable = false, updatable = false)
+    private Long userId;
+
     @Column(name = "status", length = 32)
     private String status;
 

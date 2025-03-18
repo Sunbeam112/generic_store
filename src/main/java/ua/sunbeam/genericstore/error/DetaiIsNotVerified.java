@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DetaiIsNotVerified extends RuntimeException {
-    Map<String, List<String>> errors;
+    private final Map<String, List<String>> errors;
 
     public DetaiIsNotVerified(Map<String, List<String>> errors) {
         this.errors = errors;

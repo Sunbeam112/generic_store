@@ -13,14 +13,14 @@ import java.util.Date;
 
 @Component
 public class JWTUtils {
+    private static final String EMAIL_SUBJECT = "User Details";
+    private static final String EMAIL_CLAIM = "EMAIL_CLAIM";
     @Value("${jwt.secret}")
     private String secret;
     @Value("${jwt.company_name}")
     private String companyName;
     @Value("${jwt.expiry_in_sec}")
     private int expiryInSec;
-    private final String subject = "User Details";
-    private final String claim = "EMAIL_CLAIM";
     private Algorithm algorithm;
 
     @PostConstruct
@@ -30,8 +30,8 @@ public class JWTUtils {
 
     public String generateToken(String email) {
         return JWT.create()
-                .withSubject(subject)
-                .withClaim(claim, email)
+                .withSubject(EMAIL_SUBJECT)
+                .withClaim(EMAIL_CLAIM, email)
                 .withExpiresAt(new Date(System.currentTimeMillis() + expiryInSec * 1000L))
                 .withIssuedAt(new Date())
                 .withIssuer(companyName)
@@ -40,15 +40,15 @@ public class JWTUtils {
 
     public String verifyToken(String token) throws JWTVerificationException {
         JWTVerifier verifier = JWT.require(algorithm)
-                .withSubject(subject)
+                .withSubject(EMAIL_SUBJECT)
                 .withIssuer(companyName)
                 .build();
         DecodedJWT jwt = verifier.verify(token);
-        return jwt.getClaim(claim).asString();
+        return jwt.getClaim(EMAIL_CLAIM).asString();
     }
 
     public String getEmailFromToken(String token) {
         DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
-        return jwt.getClaim(claim).asString();
+        return jwt.getClaim(EMAIL_CLAIM).asString();
     }
 }
