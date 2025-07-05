@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.sql.Timestamp;
 
+
 @Entity
 @Table(name = "verification_token")
 public class VerificationToken {

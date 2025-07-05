@@ -28,6 +28,8 @@ public class LocalUser implements UserDetails {
     @Column(name = "email", nullable = false, unique = true, length = 320)
     private String email;
 
+    @Getter
+    @Setter
     @JsonIgnore
     @Column(name = "is_email_verified", nullable = false)
     @ColumnDefault("false")
@@ -67,14 +69,6 @@ public class LocalUser implements UserDetails {
         resetPasswordTokens.add(resetPasswordToken);
     }
 
-
-    public boolean isEmailVerified() {
-        return isEmailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        isEmailVerified = emailVerified;
-    }
 
     @JsonIgnore
     @Override

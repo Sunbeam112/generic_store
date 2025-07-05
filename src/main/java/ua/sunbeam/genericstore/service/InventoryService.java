@@ -42,5 +42,10 @@ public class InventoryService {
             return true;
         }
     }
+
+    public boolean isProductAvailable(Long productID, int quantity) {
+        if (productID == null || productID < 0) return false;
+        return getProductQuantity(productID) >= quantity;
+    }
 }
 

@@ -43,5 +43,6 @@ public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
 
         return getExpiryDateInMilliseconds().compareTo(rpt.getExpiryDateInMilliseconds());
     }
-    
+
+
 }

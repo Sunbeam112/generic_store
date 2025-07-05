@@ -6,10 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
-import ua.sunbeam.genericstore.model.DAO.OrderItemsRepository;
 import ua.sunbeam.genericstore.model.OrderItem;
 import ua.sunbeam.genericstore.model.UserOrder;
-import ua.sunbeam.genericstore.service.OrderItemsService;
 import ua.sunbeam.genericstore.service.OrderService;
 
 import java.util.List;
@@ -17,13 +15,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/order/items")
 public class OrderItemsController {
-    private final OrderItemsService orderItemsService;
-    private final OrderItemsRepository orderItemsRepository;
     private final OrderService orderService;
 
-    public OrderItemsController(OrderItemsService orderItemsService, OrderItemsRepository orderItemsRepository, OrderService orderService) {
-        this.orderItemsService = orderItemsService;
-        this.orderItemsRepository = orderItemsRepository;
+    public OrderItemsController(OrderService orderService) {
         this.orderService = orderService;
     }
 
@@ -32,7 +26,7 @@ public class OrderItemsController {
         UserOrder order = orderService.getOrderById(orderID);
         if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         List<OrderItem> orderItems;
-        orderItems = orderItemsService.getAllOrderItemsByOrderId(order.getId());
+        orderItems = orderService.getAllOrderItemsByOrderId(order.getId());
         if (orderItems.isEmpty()) return new ResponseEntity<>(HttpStatus.FOUND);
 
         return new ResponseEntity<>(orderItems, HttpStatus.OK);
@@ -46,12 +40,13 @@ public class OrderItemsController {
         if (order == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 
         try {
-            boolean isAdded = orderItemsService.addItemsToOrder(products, order.getId(), result);
+            List<OrderItem> items = orderService.addItemsToOrder(products, order.getId(), result);
+            if (items == null) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             result.getFieldErrors();
             if (result.hasErrors()) {
                 return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
             }
-            if (isAdded) return new ResponseEntity<>(HttpStatus.OK);
+            if (!items.isEmpty()) return new ResponseEntity<>(HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

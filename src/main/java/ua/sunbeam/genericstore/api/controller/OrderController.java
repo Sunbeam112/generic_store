@@ -1,15 +1,14 @@
 package ua.sunbeam.genericstore.api.controller;
 
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
+import ua.sunbeam.genericstore.api.model.OrderRequestBody;
 import ua.sunbeam.genericstore.error.EmailsNotVerifiedException;
 import ua.sunbeam.genericstore.error.UserNotExistsException;
+import ua.sunbeam.genericstore.error.UserNotFoundException;
 import ua.sunbeam.genericstore.model.UserOrder;
-import ua.sunbeam.genericstore.service.OrderItemsService;
 import ua.sunbeam.genericstore.service.OrderService;
 
 import java.util.List;
@@ -20,25 +19,25 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
-    private final OrderItemsService orderItemsService;
 
-    public OrderController(OrderService orderService, OrderItemsService orderItemsService) {
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
-        this.orderItemsService = orderItemsService;
     }
 
     @CrossOrigin
-    @PostMapping("/create")
-    public ResponseEntity<Object> createOrder(@RequestParam Long userID) {
+    @PostMapping("/create-new")
+    public ResponseEntity<Object> createOrder(@RequestParam Long userID) throws UserNotExistsException {
         try {
-            UserOrder order = orderService.createOrder(userID);
+            UserOrder order = orderService.createNewEmptyOrderForUser(userID);
+
             if (order != null) {
                 return new ResponseEntity<>(HttpStatus.CREATED);
+
             }
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (EmailsNotVerifiedException e) {
             return ResponseEntity.badRequest().body("EMAIL_NOT_VERIFIED");
-        } catch (UserNotExistsException e) {
+        } catch (UserNotExistsException | UserNotFoundException e) {
             return ResponseEntity.badRequest().body("USER_NOT_EXISTS");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -46,7 +45,27 @@ public class OrderController {
 
     }
 
-    
+    @CrossOrigin
+    @PostMapping("/set")
+    public ResponseEntity<Object> setOrder(@RequestBody OrderRequestBody orderBody, BindingResult result) throws UserNotExistsException, EmailsNotVerifiedException {
+        try {
+            if (orderService.existsById(orderBody.getOrderID())) {
+                UserOrder order = orderService.placeOrder(orderBody, result);
+                if (order != null) {
+                    return new ResponseEntity<>(HttpStatus.CREATED);
+                }
+            }
+            return ResponseEntity.badRequest().body("ORDER_NOT_FOUND");
+        } catch (EmailsNotVerifiedException e) {
+            return ResponseEntity.badRequest().body("EMAIL_NOT_VERIFIED");
+        } catch (UserNotExistsException | UserNotFoundException e) {
+            return ResponseEntity.badRequest().body("USER_NOT_EXISTS");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+
     @CrossOrigin
     @GetMapping("/all-orders")
     public ResponseEntity<Object> getAllOrders() {

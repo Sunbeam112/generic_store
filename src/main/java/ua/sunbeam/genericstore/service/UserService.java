@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
@@ -181,13 +182,38 @@ public class UserService {
     }
 
 
-    public LocalUser getUserByID(Long id) {
+    public LocalUser getUserByID(Long id) throws UserNotFoundException {
         Optional<LocalUser> opUser = userRepository.findById(id);
-        return opUser.orElse(null);
+        return opUser.orElseThrow(() -> new UserNotFoundException("User with ID " + id + " not found."));
     }
 
     public UserDetails getUserByEmail(String email) {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         return opUser.orElse(null);
     }
+
+    public boolean isUserHasAddress(Long userID, Long addressID) {
+        Optional<LocalUser> opUser = userRepository.findById(userID);
+        if (opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            return user.getAddresses().stream().anyMatch(address -> address.getId().equals(addressID));
+        }
+        return false;
+
+    }
+
+    public void delete(Long id) throws UserNotFoundException {
+        Optional<LocalUser> opUser = userRepository.findById(id);
+        if (opUser.isPresent()) {
+            try {
+                userRepository.deleteById(id);
+            } catch (DataIntegrityViolationException e) {
+                throw new DataIntegrityViolationException("User with ID " + id + " cannot be deleted due to existing references.");
+            }
+        } else {
+            throw new UserNotFoundException("User with ID " + id + " not found.");
+        }
+    }
+
+
 }

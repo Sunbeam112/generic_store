@@ -24,11 +24,9 @@ public class ProductService {
     }
 
 
-
-
     public Product findById(Long id) {
         Optional<Product> product;
-        if(productRepository.existsById(id)){
+        if (productRepository.existsById(id)) {
             product = productRepository.getProductById(id);
             return product.orElse(null);
         }
@@ -49,8 +47,6 @@ public class ProductService {
             return true;
         } else return false;
     }
-
-
 
 
     public List<Product> getAllProductsByName(String name) {
@@ -81,5 +77,9 @@ public class ProductService {
 
     public List<String> getAllCategories() {
         return productRepository.getEveryCategory();
+    }
+
+    public boolean isExists(Long productId) {
+        return productRepository.existsById(productId);
     }
 }

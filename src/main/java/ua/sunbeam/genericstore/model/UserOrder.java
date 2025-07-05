@@ -45,4 +45,8 @@ public class UserOrder {
     @Column(name = "status", length = 32)
     private String status;
 
+    @ToString.Exclude
+    @ManyToOne(cascade = {CascadeType.ALL})
+    private Address address;
+
 }
