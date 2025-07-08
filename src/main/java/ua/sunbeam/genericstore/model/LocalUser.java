@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -28,6 +29,8 @@ public class LocalUser implements UserDetails {
     @Column(name = "email", nullable = false, unique = true, length = 320)
     private String email;
 
+    @Setter
+    @Getter
     @JsonIgnore
     @Column(name = "is_email_verified", nullable = false)
     @ColumnDefault("false")
@@ -52,7 +55,6 @@ public class LocalUser implements UserDetails {
     private transient List<Address> addresses = new ArrayList<>();
 
     @Setter
-    @Getter
     @JsonIgnore
     @OneToMany(mappedBy = "localUser", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id desc")
@@ -67,14 +69,10 @@ public class LocalUser implements UserDetails {
         resetPasswordTokens.add(resetPasswordToken);
     }
 
-
-    public boolean isEmailVerified() {
-        return isEmailVerified;
+    public List<ResetPasswordToken> getAllResetPasswordTokens() {
+        return this.resetPasswordTokens;
     }
 
-    public void setEmailVerified(boolean emailVerified) {
-        isEmailVerified = emailVerified;
-    }
 
     @JsonIgnore
     @Override

@@ -88,8 +88,13 @@ public class UserService {
         user.setEmail(body.getEmail());
         user.setPassword(encryptionService.encryptPassword(body.getPassword()));
         VerificationToken token = createVerificationToken(user);
-        emailVerificationService.sendEmailConformationMessage(token);
-        userRepository.save(user);
+        try {
+            emailVerificationService.sendEmailConformationMessage(token);
+            userRepository.save(user);
+        } catch (EmailFailureException ex) {
+            verificationTokenRepository.delete(token);
+            throw new EmailFailureException();
+        }
     }
 
     private VerificationToken createVerificationToken(LocalUser user) {
@@ -160,7 +165,7 @@ public class UserService {
         return false;
     }
 
-    public ResetPasswordToken resetPassword(String email) throws EmailsNotVerifiedException, EmailFailureException, PasswordResetCooldown {
+    public void trySendResetPasswordEmail(String email) throws EmailsNotVerifiedException, EmailFailureException, PasswordResetCooldown {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
@@ -168,16 +173,18 @@ public class UserService {
                 try {
                     ResetPasswordToken rpt = rptService.tryToCreateRPT(user);
                     resetPasswordEmailService.sendResetPasswordEmail(rpt);
-                    return rpt;
+                    return;
                 } catch (EmailFailureException ex) {
                     throw new EmailFailureException();
+                } catch (PasswordResetCooldown ex) {
+                    throw new PasswordResetCooldown();
                 }
 
             } else {
                 throw new EmailsNotVerifiedException();
             }
         }
-        return null;
+
     }
 
 

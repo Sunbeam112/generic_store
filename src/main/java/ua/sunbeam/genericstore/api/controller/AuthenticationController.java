@@ -1,6 +1,5 @@
 package ua.sunbeam.genericstore.api.controller;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +15,8 @@ import ua.sunbeam.genericstore.error.*;
 import ua.sunbeam.genericstore.model.ResetPasswordToken;
 import ua.sunbeam.genericstore.service.RPTService;
 import ua.sunbeam.genericstore.service.UserService;
+
+import java.util.Optional;
 
 
 @CrossOrigin(maxAge = 3600)
@@ -35,7 +36,7 @@ public class AuthenticationController {
         this.rtpService = rptService;
     }
 
-    @Transactional
+
     @CrossOrigin
     @PostMapping("/register")
     public ResponseEntity<Object> registerUser
@@ -90,9 +91,10 @@ public class AuthenticationController {
     }
 
 
-    @GetMapping("/logout")
-    public ResponseEntity<String> logoutUser() {
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logoutUser() {
+        System.out.println("User has initiated a logout (client-side token discard expected).");
+        return ResponseEntity.ok().build();
     }
 
 
@@ -101,7 +103,7 @@ public class AuthenticationController {
         return userService.getUserByEmail((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     }
 
-    @Transactional
+
     @CrossOrigin
     @PostMapping("/verify")
     public ResponseEntity<LoginResponse> verifyUser(@RequestParam String token) {
@@ -114,10 +116,16 @@ public class AuthenticationController {
 
     @CrossOrigin
     @PostMapping("/forgot_password")
-    public ResponseEntity<Object> forgotPassword(@RequestParam String email) throws EmailsNotVerifiedException {
+    public ResponseEntity<Object> forgotPassword(@RequestParam String email) {
+        if (email == null || email.trim().isBlank()) {
+            return ResponseEntity.badRequest().body("EMAIL_NOT_PROVIDED");
+        }
+        if (!userService.isUserExistsByEmail(email)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("EMAIL_NOT_FOUND");
+        }
         try {
-            ResetPasswordToken token = userService.resetPassword(email);
-            return new ResponseEntity<>(token, HttpStatus.OK);
+            userService.trySendResetPasswordEmail(email);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (EmailsNotVerifiedException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
         } catch (EmailFailureException e) {
@@ -130,26 +138,40 @@ public class AuthenticationController {
     @CrossOrigin
     @PostMapping("/reset_password")
     public ResponseEntity<Object> changeUserPassword(@Valid @RequestBody PasswordResetRequestBody resetBody, BindingResult result) {
-        boolean isValid = rtpService.verifyRPT(resetBody.getToken());
-        if (isValid) {
-            ResetPasswordToken token = rtpService.getTokenByToken(resetBody.getToken());
+        Optional<ResetPasswordToken> opToken = rtpService.verifyAndGetRPT(resetBody.getToken());
+
+        if (opToken.isPresent()) {
+            ResetPasswordToken token = opToken.get();
             try {
+
                 boolean isPasswordChanged = userService.setUserPasswordByEmail(
                         token.getLocalUser().getEmail(), resetBody.getNewPassword(), result);
+
                 if (result.hasErrors()) {
+
                     throw new DetaiIsNotVerified(validationErrorsParser.parseErrorsFrom(result));
                 }
+
                 if (isPasswordChanged) {
-                    rtpService.removeToken(token);
+
+                    rtpService.markTokenAsUsed(token);
                     return ResponseEntity.ok().build();
+                } else {
+
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("PASSWORD_CHANGE_FAILED");
                 }
 
             } catch (EmailsNotVerifiedException e) {
+
                 return ResponseEntity.status(HttpStatus.CONFLICT).body("EMAIL_NOT_VERIFIED");
             } catch (DetaiIsNotVerified e) {
                 return ResponseEntity.badRequest().body(e.getErrors());
+            } catch (Exception e) {
+                System.err.println("Error during password reset: " + e.getMessage());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("AN_UNEXPECTED_ERROR_OCCURRED");
             }
+        } else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("INVALID_OR_EXPIRED_TOKEN");
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
     }
 }

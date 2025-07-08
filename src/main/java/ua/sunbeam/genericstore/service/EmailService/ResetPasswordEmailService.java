@@ -21,7 +21,7 @@ public class ResetPasswordEmailService extends BasicMailService {
         SimpleMailMessage message = createSimpleMailMessage();
         message.setTo(token.getLocalUser().getEmail());
         message.setSubject(greeting);
-        message.setText(String.format("%s\n%s?token=%s", text, url, token.getToken()));
+        message.setText(String.format("%s\n%s?%s", text, url, token.getToken()));
         try {
             mailSender.send(message);
         } catch (MailException ex) {
