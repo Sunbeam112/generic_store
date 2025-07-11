@@ -1,5 +1,6 @@
 package ua.sunbeam.genericstore.api.controller;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ import ua.sunbeam.genericstore.service.UserService;
 import java.util.Optional;
 
 
-@CrossOrigin(maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/auth/v1")
 public class AuthenticationController {
@@ -39,6 +40,17 @@ public class AuthenticationController {
 
     @CrossOrigin
     @PostMapping("/register")
+    /**
+     * Registers a new user in the system.
+     *
+     * @param body The registration body containing user details.
+     * @param result The binding result for validation errors.
+     * @return A ResponseEntity indicating the outcome of the registration attempt.
+     * - HttpStatus.CREATED (201) if the user is successfully registered.
+     * - HttpStatus.CONFLICT (409) if a user with the provided email already exists.
+     * - HttpStatus.INTERNAL_SERVER_ERROR (500) if there's an issue sending the verification email.
+     * - HttpStatus.BAD_REQUEST (400) if the provided details are not valid.
+     */
     public ResponseEntity<Object> registerUser
             (@Valid @RequestBody RegistrationBody body, BindingResult result) {
         try {
@@ -59,6 +71,17 @@ public class AuthenticationController {
 
     @CrossOrigin
     @PostMapping("/login")
+    /**
+     * Authenticates a user and provides a JWT upon successful login.
+     *
+     * @param loginBody The login body containing user credentials (email and password).
+     * @return A ResponseEntity containing a LoginResponse with a JWT if successful,
+     * or an error status and reason if authentication fails.
+     * - HttpStatus.OK (200) with a LoginResponse containing the JWT if login is successful.
+     * - HttpStatus.FORBIDDEN (403) if the user is not verified, with a reason.
+     * - HttpStatus.INTERNAL_SERVER_ERROR (500) if there's an issue with email services.
+     * - HttpStatus.BAD_REQUEST (400) for general authentication failures or invalid input.
+     */
     public ResponseEntity<LoginResponse> loginUser(@Valid @RequestBody LoginBody loginBody) {
         String jwt;
         try {
@@ -92,6 +115,12 @@ public class AuthenticationController {
 
 
     @PostMapping("/logout")
+    /**
+     * Handles user logout. This is primarily a client-side action where the client discards the token.
+     * The server simply acknowledges the logout request.
+     *
+     * @return A ResponseEntity with HttpStatus.OK (200) indicating successful acknowledgement.
+     */
     public ResponseEntity<Void> logoutUser() {
         System.out.println("User has initiated a logout (client-side token discard expected).");
         return ResponseEntity.ok().build();
@@ -99,6 +128,11 @@ public class AuthenticationController {
 
 
     @GetMapping("/me")
+    /**
+     * Retrieves the details of the authenticated user.
+     *
+     * @return The UserDetails object representing the currently authenticated user.
+     */
     public UserDetails getUserData() {
         return userService.getUserByEmail((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
     }
@@ -106,6 +140,14 @@ public class AuthenticationController {
 
     @CrossOrigin
     @PostMapping("/verify")
+    /**
+     * Verifies a user's email address using a provided token.
+     *
+     * @param token The verification token sent to the user's email.
+     * @return A ResponseEntity indicating the outcome of the verification.
+     * - HttpStatus.OK (200) if the user is successfully verified.
+     * - HttpStatus.CONFLICT (409) if the token is invalid or expired, or the user cannot be verified.
+     */
     public ResponseEntity<LoginResponse> verifyUser(@RequestParam String token) {
         if (userService.verifyUser(token)) {
             return ResponseEntity.ok().build();
@@ -116,6 +158,17 @@ public class AuthenticationController {
 
     @CrossOrigin
     @PostMapping("/forgot_password")
+    /**
+     * Initiates the forgotten password process by sending a reset password email to the provided email address.
+     *
+     * @param email The email address of the user who forgot their password.
+     * @return A ResponseEntity indicating the outcome of the request.
+     * - HttpStatus.OK (200) if the reset password email is successfully sent.
+     * - HttpStatus.BAD_REQUEST (400) if the email is not provided.
+     * - HttpStatus.NOT_FOUND (404) if no user exists with the provided email.
+     * - HttpStatus.CONFLICT (409) if the email is not verified or a password reset is on cooldown.
+     * - HttpStatus.INTERNAL_SERVER_ERROR (500) if there's an issue sending the email.
+     */
     public ResponseEntity<Object> forgotPassword(@RequestParam String email) {
         if (email == null || email.trim().isBlank()) {
             return ResponseEntity.badRequest().body("EMAIL_NOT_PROVIDED");
@@ -137,6 +190,17 @@ public class AuthenticationController {
 
     @CrossOrigin
     @PostMapping("/reset_password")
+    /**
+     * Resets the user's password using a valid reset password token.
+     *
+     * @param resetBody The request body containing the reset token and the new password.
+     * @param result The binding result for validation errors of the new password.
+     * @return A ResponseEntity indicating the outcome of the password reset attempt.
+     * - HttpStatus.OK (200) if the password is successfully changed.
+     * - HttpStatus.BAD_REQUEST (400) if the token is invalid or expired, or if the new password fails validation.
+     * - HttpStatus.CONFLICT (409) if the user's email is not verified.
+     * - HttpStatus.INTERNAL_SERVER_ERROR (500) if an unexpected error occurs during the password change.
+     */
     public ResponseEntity<Object> changeUserPassword(@Valid @RequestBody PasswordResetRequestBody resetBody, BindingResult result) {
         Optional<ResetPasswordToken> opToken = rtpService.verifyAndGetRPT(resetBody.getToken());
 

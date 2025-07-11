@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import ua.sunbeam.genericstore.model.DAO.UserRepository;
 import ua.sunbeam.genericstore.model.LocalUser;
-import ua.sunbeam.genericstore.service.userDetailsService;
+import ua.sunbeam.genericstore.service.UserDetailsService;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -24,9 +24,9 @@ public class JWTRequestFilter extends OncePerRequestFilter {
 
 
     private final UserRepository userRepository;
-    private final userDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
-    public JWTRequestFilter(JWTUtils jwtUtils, UserRepository userRepository, userDetailsService userDetailsService) {
+    public JWTRequestFilter(JWTUtils jwtUtils, UserRepository userRepository, UserDetailsService userDetailsService) {
         this.jwtUtils = jwtUtils;
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;

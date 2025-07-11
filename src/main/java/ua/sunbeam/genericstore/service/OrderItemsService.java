@@ -40,7 +40,7 @@ public class OrderItemsService {
             if (product.getProductID() == null || product.getQuantity() == null)
                 throw new IllegalArgumentException("Product ID or quantity is null");
             if (product.getProductID() > 0 && product.getQuantity() > 0) {
-                if (productService.findById(product.getProductID()) == null)
+                if (productService.findById(product.getProductID()).isEmpty())
                     throw new IllegalArgumentException("No such product");
                 boolean isInStock = inventoryService.getProductQuantity(product.getProductID()) >= product.getQuantity();
 
@@ -49,7 +49,7 @@ public class OrderItemsService {
                     item.setUserOrder(order);
                     item.setDispatched(false);
                     item.setQuantity(product.getQuantity());
-                    item.setProduct(productService.findById(product.getProductID()));
+                    item.setProduct(productService.findById(product.getProductID()).get());
                     orderItemsRepository.save(item);
                 } else {
                     throw new IllegalArgumentException("Not enough quantity of product");

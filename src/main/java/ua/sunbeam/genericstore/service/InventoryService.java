@@ -5,6 +5,8 @@ import ua.sunbeam.genericstore.model.DAO.InventoryRepository;
 import ua.sunbeam.genericstore.model.Inventory;
 import ua.sunbeam.genericstore.model.Product;
 
+import java.util.Optional;
+
 @Service
 public class InventoryService {
 
@@ -20,27 +22,28 @@ public class InventoryService {
 
     public int getProductQuantity(Long productID) {
         if (productID == null || productID <= 0) return -1;
-        Product product = productService.findById(productID);
-        if (product == null) return -1;
-        if (product.getInventory() == null) return 0;
-        return product.getInventory().getQuantity();
+        Optional<Product> product = productService.findById(productID);
+        if (product.isEmpty()) return -1;
+        if (product.get().getInventory() == null) return 0;
+        return product.get().getInventory().getQuantity();
     }
 
 
     public boolean setItemQuantity(Long productID, int quantity) {
         if (productID == null || productID < 0) throw new IllegalArgumentException("Bad product ID");
-        Product product = productService.findById(productID);
-        if (product == null) throw new IllegalArgumentException("No such product");
-        if (product.getInventory() == null) {
-            Inventory inventory = new Inventory();
-            inventory.setProduct(product);
-            inventory.setQuantity(quantity);
-            inventoryRepository.save(inventory);
-            return true;
-        } else {
-            product.getInventory().setQuantity(quantity);
+        Optional<Product> product = productService.findById(productID);
+        if (product.isPresent()) {
+            if (product.get().getInventory() == null) {
+                Inventory inventory = new Inventory();
+                inventory.setProduct(product.get());
+                inventory.setQuantity(quantity);
+                inventoryRepository.save(inventory);
+                return true;
+            }
+            product.get().getInventory().setQuantity(quantity);
             return true;
         }
+        throw new IllegalArgumentException("No such product with ID: " + productID);
     }
 }
 

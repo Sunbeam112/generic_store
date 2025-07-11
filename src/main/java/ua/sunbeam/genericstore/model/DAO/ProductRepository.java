@@ -5,7 +5,6 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import ua.sunbeam.genericstore.model.Product;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,7 +14,7 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     void removeById(Long id);
 
-    List<Product> findByNameContainsIgnoreCase(String name);
+    List<Product> getByNameIgnoreCase(String name);
 
     boolean existsByNameContainsIgnoreCase(String name);
 
@@ -28,11 +27,9 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     @Query(value = "select distinct category from product", nativeQuery = true)
     List<String> getEveryCategory();
 
-    List<Product> findByNameInIgnoreCase(Collection<String> names);
-
 
     @Override
-    boolean existsById(Long aLong);
+    boolean existsById(Long id);
 
     Optional<Product> getProductById(Long id);
 }

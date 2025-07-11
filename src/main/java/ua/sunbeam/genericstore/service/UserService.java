@@ -74,27 +74,22 @@ public class UserService {
 
     }
 
+    @Transactional
     public void registerUser(@Valid @RequestBody RegistrationBody body, BindingResult result)
             throws UserAlreadyExist, EmailFailureException {
         Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(body.getEmail());
         if (opUser.isPresent()) {
             throw new UserAlreadyExist();
         }
-        result.getFieldErrors();
-        if (result.hasErrors()) {
-            return;
-        }
+
         LocalUser user = new LocalUser();
         user.setEmail(body.getEmail());
         user.setPassword(encryptionService.encryptPassword(body.getPassword()));
+        userRepository.save(user);
         VerificationToken token = createVerificationToken(user);
-        try {
-            emailVerificationService.sendEmailConformationMessage(token);
-            userRepository.save(user);
-        } catch (EmailFailureException ex) {
-            verificationTokenRepository.delete(token);
-            throw new EmailFailureException();
-        }
+        verificationTokenRepository.save(token);
+        emailVerificationService.sendEmailConformationMessage(token);
+
     }
 
     private VerificationToken createVerificationToken(LocalUser user) {
@@ -122,25 +117,23 @@ public class UserService {
         return false;
     }
 
-
+    @Transactional
     public boolean setUserPasswordByEmail(String email,
                                           @NotNull @NotBlank @Size(min = 8, max = 64) String password,
                                           BindingResult result) throws EmailsNotVerifiedException {
-        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
-        result.getFieldErrors();
         if (result.hasErrors()) {
             return false;
-        } else {
-            if (opUser.isPresent()) {
-                LocalUser user = opUser.get();
-                if (user.isEmailVerified()) {
-                    user.setPassword(encryptionService.encryptPassword(password));
-                    return true;
-                } else {
-                    throw new EmailsNotVerifiedException();
-                }
+        }
+        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
+        if (opUser.isPresent()) {
+            LocalUser user = opUser.get();
+            if (user.isEmailVerified()) {
+                user.setPassword(encryptionService.encryptPassword(password));
+                userRepository.save(user);
+                return true;
+            } else {
+                throw new EmailsNotVerifiedException();
             }
-
         }
         return false;
     }
