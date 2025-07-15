@@ -72,7 +72,7 @@ public class ProductService {
      * @return An Optional containing the added product if successful, or an empty Optional if a product with the same ID already exists.
      * @throws IllegalArgumentException if a product with the same name already exists.
      */
-    public Optional<Product> addProduct(Product product) {
+    public Optional<Product> addProduct(Product product) throws IllegalArgumentException {
         if (product == null) return Optional.empty();
         if (product.getId() == null) {
             if (productRepository.existsByNameContainsIgnoreCase(product.getName())) {

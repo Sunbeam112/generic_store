@@ -2,6 +2,7 @@ package ua.sunbeam.genericstore.service.csv;
 
 import org.springframework.stereotype.Service;
 import ua.sunbeam.genericstore.model.Product;
+import ua.sunbeam.genericstore.model.ProductImage; // Import ProductImage
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.stream.Collectors; // Import Collectors
 
 @Service
 public class ProductCSVWriter {
@@ -22,27 +24,23 @@ public class ProductCSVWriter {
 
         String header = String.join(",", CSVUtils.PRODUCT_EXPECTED_HEADERS);
 
-
         List<String> productLines = products.stream()
                 .map(ProductCSVWriter::toCSVLine)
                 .toList();
 
-
         try (BufferedWriter writer = Files.newBufferedWriter(
                 path,
-                StandardOpenOption.CREATE,       // Create the file if it doesn't exist
-                StandardOpenOption.TRUNCATE_EXISTING // Truncate the file if it already exists (overwrite)
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
         )) {
-            // Write the header
             writer.write(header);
             writer.newLine();
 
             for (String line : productLines) {
                 writer.write(line);
-                writer.newLine(); // Add a newline after each product record
+                writer.newLine();
             }
         }
-
     }
 
     /**
@@ -55,6 +53,12 @@ public class ProductCSVWriter {
      * @return A CSV formatted string representation of the product.
      */
     private static String toCSVLine(Product product) {
+        // Extract product image URLs and join them with a delimiter
+        String imageUrls = product.getProductImages().stream()
+                .map(ProductImage::getImageUrl)
+                .filter(url -> url != null && !url.isEmpty())
+                .collect(Collectors.joining(CSVUtils.PRODUCT_IMAGE_URL_DELIMITER));
+
         return String.join(",",
                 escapeCsvField(product.getName()),
                 escapeCsvField(String.valueOf(product.getPrice())),
@@ -62,7 +66,8 @@ public class ProductCSVWriter {
                 escapeCsvField(product.getCategory()),
                 escapeCsvField(product.getUrlPhoto()),
                 escapeCsvField(product.getSubcategory()),
-                escapeCsvField(product.getShortDescription())
+                escapeCsvField(product.getShortDescription()),
+                escapeCsvField(imageUrls)
         );
     }
 
@@ -78,13 +83,11 @@ public class ProductCSVWriter {
         if (field == null) {
             return "";
         }
-        String data = String.valueOf(field);
-        // Check for characters that require quoting: comma, double quote, newline, carriage return
-        if (data.contains(",") || data.contains("\"") || data.contains("\n") || data.contains("\r")) {
-            // Escape internal double quotes by doubling them
-            return "\"" + data.replace("\"", "\"\"") + "\"";
-        }
-        return data;
-    }
 
+        if (field.contains(",") || field.contains("\"") || field.contains("\n") || field.contains("\r") || field.contains(CSVUtils.PRODUCT_IMAGE_URL_DELIMITER)) {
+
+            return "\"" + field.replace("\"", "\"\"") + "\"";
+        }
+        return field;
+    }
 }

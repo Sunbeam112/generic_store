@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import ua.sunbeam.genericstore.error.CsvProcessingException;
 import ua.sunbeam.genericstore.model.DAO.ProductRepository;
 import ua.sunbeam.genericstore.model.Product;
+import ua.sunbeam.genericstore.model.ProductImage; // Import ProductImage
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,22 +20,12 @@ import java.util.stream.Collectors;
 @Service
 public class ProductCSVReader {
 
-
     private final ProductRepository productRepository;
 
     public ProductCSVReader(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
-    /**
-     * Main method to import products from a CSV MultipartFile.
-     * Orchestrates file validation, CSV parsing, header validation, and mapping to Product objects.
-     *
-     * @param file The MultipartFile representing the uploaded CSV.
-     * @return A list of Product objects parsed from the CSV.
-     * @throws IllegalArgumentException if the file is empty, of an invalid type, or has incorrect headers/data.
-     * @throws CsvProcessingException   if an IOException occurs during file reading or CSV parsing.
-     */
     public List<Product> importProductsFromCSV(MultipartFile file) throws CsvProcessingException, IllegalArgumentException {
         validateFile(file);
 
@@ -64,7 +55,7 @@ public class ProductCSVReader {
                 .setHeader(CSVUtils.PRODUCT_EXPECTED_HEADERS)
                 .setSkipHeaderRecord(true)
                 .setTrim(true)
-                .setIgnoreHeaderCase(true) // Crucial for case-insensitive header matching
+                .setIgnoreHeaderCase(true)
                 .build();
 
         BufferedReader reader = new BufferedReader(
@@ -125,6 +116,22 @@ public class ProductCSVReader {
                 product.setSubcategory(csvRecord.get("subcategory"));
                 product.setShortDescription(csvRecord.get("short_description"));
 
+
+                String productImageUrlsString = csvRecord.get("product_image_urls");
+                if (productImageUrlsString != null && !productImageUrlsString.trim().isEmpty()) {
+                    String[] imageUrls = productImageUrlsString.split(CSVUtils.PRODUCT_IMAGE_URL_DELIMITER);
+                    List<ProductImage> productImages = new ArrayList<>();
+                    for (String url : imageUrls) {
+                        if (!url.trim().isEmpty()) {
+                            ProductImage productImage = new ProductImage();
+                            productImage.setImageUrl(url.trim());
+                            productImage.setProduct(product);
+                            productImages.add(productImage);
+                        }
+                    }
+                    product.setProductImages(productImages);
+                }
+
                 products.add(product);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Error in CSV record #" + recordNumber + ": " + e.getMessage(), e);
@@ -133,4 +140,3 @@ public class ProductCSVReader {
         return products;
     }
 }
-

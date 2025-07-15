@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ua.sunbeam.genericstore.model.Product;
+import ua.sunbeam.genericstore.model.ProductImage;
 import ua.sunbeam.genericstore.service.ProductService;
 import ua.sunbeam.genericstore.service.csv.ProductCSVReader;
 import ua.sunbeam.genericstore.service.csv.ProductCSVWriter;
@@ -43,6 +44,7 @@ public class ProductController {
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
+    @GetMapping("/category={input}")
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String input) {
         Optional<List<Product>> products;
         products = productService.getAllProductsByCategory(input);
@@ -85,11 +87,28 @@ public class ProductController {
 
     @PostMapping(value = "/add")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Product> addProduct(@RequestBody Product product) {
-        Optional<Product> savedProduct = productService.addProduct(product);
-
-        return savedProduct.map(o -> ResponseEntity.created(URI.create("/product/" + o))
-                .body((Product) o)).orElseGet(() -> ResponseEntity.status(HttpStatus.CONFLICT).build());
+    public ResponseEntity addProduct(@RequestBody Product product) {
+        if (product == null || product.getName() == null || product.getPrice() == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        if (product.getName().isEmpty() || product.getPrice() <= 0) {
+            return ResponseEntity.badRequest().body("Price must be greater than 0 and name cannot be empty");
+        }
+        if (product.getProductImages() != null) {
+            for (ProductImage productImage : product.getProductImages()) {
+                productImage.setProduct(product);
+            }
+        }
+        Optional<Product> savedProduct;
+        try {
+            savedProduct = productService.addProduct(product);
+            return savedProduct.map(value -> {
+                URI location = URI.create(String.format("/product/id=%d", value.getId()));
+                return ResponseEntity.created(location).body(value);
+            }).orElseGet(() -> ResponseEntity.internalServerError().build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Product with name " + product.getName() + " already exists");
+        }
 
     }
 

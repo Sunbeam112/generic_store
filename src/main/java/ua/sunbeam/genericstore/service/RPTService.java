@@ -102,7 +102,7 @@ public class RPTService {
             throw new EmailsNotVerifiedException();
         }
 
-        List<ResetPasswordToken> allTokens = user.getAllResetPasswordTokens();
+        List<ResetPasswordToken> allTokens = user.getResetPasswordTokens();
 
         // Get the latest token based on expiry date (which is set at creation)
         Optional<ResetPasswordToken> lastTokenOpt = allTokens.stream()

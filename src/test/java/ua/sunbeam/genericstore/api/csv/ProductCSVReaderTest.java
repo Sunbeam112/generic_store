@@ -57,7 +57,7 @@ class ProductCSVReaderTest {
         assertNotNull(products);
         assertEquals(2, products.size());
 
-        Product product1 = products.get(0);
+        Product product1 = products.getFirst();
         assertEquals("ProductA", product1.getName());
         assertEquals(10.00, product1.getPrice());
         assertEquals("DescA", product1.getDescription());
