@@ -127,15 +127,7 @@ public class AuthenticationController {
     }
 
 
-    @GetMapping("/me")
-    /**
-     * Retrieves the details of the authenticated user.
-     *
-     * @return The UserDetails object representing the currently authenticated user.
-     */
-    public UserDetails getUserData() {
-        return userService.getUserByEmail((String) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
-    }
+
 
 
     @CrossOrigin

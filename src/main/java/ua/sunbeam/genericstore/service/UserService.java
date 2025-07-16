@@ -5,7 +5,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -186,8 +185,7 @@ public class UserService {
         return opUser.orElse(null);
     }
 
-    public UserDetails getUserByEmail(String email) {
-        Optional<LocalUser> opUser = userRepository.findByEmailIgnoreCase(email);
-        return opUser.orElse(null);
+    public Optional<LocalUser> getUserByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(email);
     }
 }

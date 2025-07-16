@@ -121,11 +121,13 @@ public class ProductCSVReader {
                 if (productImageUrlsString != null && !productImageUrlsString.trim().isEmpty()) {
                     String[] imageUrls = productImageUrlsString.split(CSVUtils.PRODUCT_IMAGE_URL_DELIMITER);
                     List<ProductImage> productImages = new ArrayList<>();
+                    int displayOrder = 1;
                     for (String url : imageUrls) {
                         if (!url.trim().isEmpty()) {
                             ProductImage productImage = new ProductImage();
                             productImage.setImageUrl(url.trim());
                             productImage.setProduct(product);
+                            if(productImage.getDisplayOrder()==null) productImage.setDisplayOrder(displayOrder++);
                             productImages.add(productImage);
                         }
                     }

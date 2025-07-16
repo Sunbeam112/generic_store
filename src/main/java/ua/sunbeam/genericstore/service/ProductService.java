@@ -156,7 +156,11 @@ public class ProductService {
         return productRepository.getEveryCategory();
     }
 
-    public Object getAllProducts() {
-        return productRepository.findAll();
+    public List<Product> getAllProducts() {
+        return (List<Product>) productRepository.findAll();
+    }
+
+    public boolean isExistsByID(long parsedId) {
+        return productRepository.existsById(parsedId);
     }
 }
