@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ua.sunbeam.genericstore.model.Product;
 import ua.sunbeam.genericstore.service.CsvFileUtil;
-import ua.sunbeam.genericstore.service.InventoryService;
 import ua.sunbeam.genericstore.service.ProductService;
 import ua.sunbeam.genericstore.service.csv.ProductCSVReader;
 import ua.sunbeam.genericstore.service.csv.ProductCSVWriter;
@@ -26,13 +25,11 @@ public class ProductController {
     private final ProductService productService;
     private final ProductCSVReader productCSVReader;
     private final ProductCSVWriter productCSVWriter;
-    private final InventoryService inventoryService;
 
-    public ProductController(ProductService productService, ProductCSVReader productCSVReader, ProductCSVWriter productCSVWriter, InventoryService inventoryService) {
+    public ProductController(ProductService productService, ProductCSVReader productCSVReader, ProductCSVWriter productCSVWriter) {
         this.productService = productService;
         this.productCSVReader = productCSVReader;
         this.productCSVWriter = productCSVWriter;
-        this.inventoryService = inventoryService;
     }
 
 
@@ -80,7 +77,7 @@ public class ProductController {
 
 
     @PostMapping(value = "/add")
-    public ResponseEntity addProduct(@RequestBody Product product) {
+    public ResponseEntity<?> addProduct(@RequestBody Product product) {
         if (product == null || product.getName() == null || product.getPrice() == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }

@@ -42,7 +42,7 @@ public class InventoryService {
         }
 
         if (product.get().getInventory() == null) {
-            System.out.println("inventory is null for " + productID.toString());
+            System.out.println("inventory is null for " + productID);
             return 0;
         }
 

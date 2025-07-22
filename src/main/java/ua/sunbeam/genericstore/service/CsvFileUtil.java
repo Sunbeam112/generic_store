@@ -14,6 +14,9 @@ import java.time.format.DateTimeFormatter;
 
 public class CsvFileUtil {
 
+    private CsvFileUtil() {
+    }
+
     // --- Constants ---
     private static final String CSV_FILE_PREFIX = "products_";
     private static final String CSV_FILE_EXTENSION = ".csv";
@@ -23,6 +26,7 @@ public class CsvFileUtil {
 
     /**
      * Generates a unique CSV file name based on the current timestamp.
+     *
      * @return The generated file name.
      */
     public static String generateCsvFileName() {
@@ -33,8 +37,9 @@ public class CsvFileUtil {
     /**
      * Determines the directory to save the CSV file and creates it if it doesn't exist.
      * Defaults to the system's temporary directory if no specific directory is provided.
+     *
      * @param directoryPath The optional directory path provided by the user.
-     * @param fileName The name of the file to be saved.
+     * @param fileName      The name of the file to be saved.
      * @return The full path where the CSV file should be saved.
      * @throws IOException If there's an error creating the directory.
      */
@@ -51,6 +56,7 @@ public class CsvFileUtil {
 
     /**
      * Reads all bytes from the specified file path.
+     *
      * @param filePath The path to the file to read.
      * @return A byte array containing the file's content.
      * @throws IOException If there's an error reading the file.
@@ -61,6 +67,7 @@ public class CsvFileUtil {
 
     /**
      * Deletes the file at the specified path.
+     *
      * @param filePath The path to the file to delete.
      * @throws IOException If there's an error deleting the file.
      */
@@ -70,6 +77,7 @@ public class CsvFileUtil {
 
     /**
      * Builds the HTTP response entity for the CSV file download.
+     *
      * @param csvBytes The byte array of the CSV content.
      * @param fileName The name of the CSV file.
      * @return A ResponseEntity containing the CSV file.

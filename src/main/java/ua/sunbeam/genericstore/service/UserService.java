@@ -166,7 +166,6 @@ public class UserService {
                 try {
                     ResetPasswordToken rpt = rptService.tryToCreateRPT(user);
                     resetPasswordEmailService.sendResetPasswordEmail(rpt);
-                    return;
                 } catch (EmailFailureException ex) {
                     throw new EmailFailureException();
                 } catch (PasswordResetCooldown ex) {

@@ -9,7 +9,6 @@ import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
 import ua.sunbeam.genericstore.error.InsufficientStockException;
 import ua.sunbeam.genericstore.error.OrderNotFoundException;
 import ua.sunbeam.genericstore.error.ProductNotFoundException;
-import ua.sunbeam.genericstore.model.DAO.OrderItemsRepository;
 import ua.sunbeam.genericstore.model.OrderItem;
 import ua.sunbeam.genericstore.model.UserOrder;
 import ua.sunbeam.genericstore.service.OrderItemsService;
@@ -23,13 +22,11 @@ import java.util.Optional;
 @RequestMapping("/admin/order/items")
 public class OrderItemsController {
     private final OrderItemsService orderItemsService;
-    private final OrderItemsRepository orderItemsRepository;
     private final OrderService orderService;
     private final ValidationErrorsParser validationErrorsParser;
 
-    public OrderItemsController(OrderItemsService orderItemsService, OrderItemsRepository orderItemsRepository, OrderService orderService, ValidationErrorsParser validationErrorsParser) {
+    public OrderItemsController(OrderItemsService orderItemsService, OrderService orderService, ValidationErrorsParser validationErrorsParser) {
         this.orderItemsService = orderItemsService;
-        this.orderItemsRepository = orderItemsRepository;
         this.orderService = orderService;
         this.validationErrorsParser = validationErrorsParser;
     }

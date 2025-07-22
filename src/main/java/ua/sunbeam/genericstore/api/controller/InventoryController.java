@@ -5,17 +5,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.error.ProductNotFoundException;
 import ua.sunbeam.genericstore.service.InventoryService;
-import ua.sunbeam.genericstore.service.ProductService;
 
 @RestController
 @RequestMapping("/admin/inventory")
 public class InventoryController {
     private final InventoryService inventoryService;
-    private final ProductService productService;
 
-    public InventoryController(InventoryService inventoryService, ProductService productService) {
+    public InventoryController(InventoryService inventoryService) {
         this.inventoryService = inventoryService;
-        this.productService = productService;
     }
 
 

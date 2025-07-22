@@ -11,7 +11,7 @@ import java.io.Serializable;
 public class ProductToOrderBody implements Serializable {
     @NotNull(message = "Product ID cannot be null.")
     @Positive(message = "Product ID must be a positive number.")
-    private Long productID;
+    private final Long productID;
 
     @NotNull(message = "Quantity cannot be null.")
     @Positive(message = "Quantity must be a positive number.")

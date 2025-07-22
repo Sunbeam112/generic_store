@@ -5,4 +5,7 @@ public class CSVUtils {
             "name", "price", "description", "category", "url_photo", "subcategory", "short_description", "product_image_urls"
     };
     public static final String PRODUCT_IMAGE_URL_DELIMITER = ";";
+
+    private CSVUtils() {
+    }
 }

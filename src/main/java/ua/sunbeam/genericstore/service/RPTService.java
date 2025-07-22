@@ -143,11 +143,7 @@ public class RPTService {
                 return false;
             }
             LocalUser user = opToken.get().getLocalUser();
-            if (user == null || !user.isEmailVerified()) {
-                return false;
-            }
-
-            return true;
+            return user != null && user.isEmailVerified();
         }
 
 
