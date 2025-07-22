@@ -1,9 +1,13 @@
 package ua.sunbeam.genericstore.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import ua.sunbeam.genericstore.model.DAO.InventoryRepository;
 import ua.sunbeam.genericstore.model.DAO.ProductRepository;
+import ua.sunbeam.genericstore.model.Inventory;
 import ua.sunbeam.genericstore.model.Product;
+import ua.sunbeam.genericstore.model.ProductImage;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,14 +22,16 @@ import java.util.Optional;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final InventoryRepository inventoryRepository;
 
     /**
      * Constructor for ProductService.
      *
      * @param productRepository The repository for product data access.
      */
-    public ProductService(ProductRepository productRepository) {
+    public ProductService(ProductRepository productRepository, InventoryRepository inventoryRepository) {
         this.productRepository = productRepository;
+        this.inventoryRepository = inventoryRepository;
     }
 
     /**
@@ -72,12 +78,18 @@ public class ProductService {
      * @return An Optional containing the added product if successful, or an empty Optional if a product with the same ID already exists.
      * @throws IllegalArgumentException if a product with the same name already exists.
      */
+    @Transactional
     public Optional<Product> addProduct(Product product) throws IllegalArgumentException {
         if (product == null) return Optional.empty();
         if (product.getId() == null) {
             if (productRepository.existsByNameContainsIgnoreCase(product.getName())) {
                 throw new IllegalArgumentException("Product with name " + product.getName() + " already exists");
             }
+
+            Product savedProduct = productRepository.save(product);
+            Inventory inventory = new Inventory(product, 0);
+            inventoryRepository.save(inventory);
+            savedProduct.setInventory(inventory);
             return Optional.of(productRepository.save(product));
         }
 
@@ -92,6 +104,7 @@ public class ProductService {
      * @return An Iterable containing the saved products.
      * @throws IllegalArgumentException if the products list is null or empty.
      */
+    @Transactional
     public Iterable<Product> addAll(List<Product> products) throws IllegalArgumentException {
         if (products != null && !products.isEmpty()) {
             return productRepository.saveAll(products);
@@ -162,5 +175,26 @@ public class ProductService {
 
     public boolean isExistsByID(long parsedId) {
         return productRepository.existsById(parsedId);
+    }
+
+    public void generateDisplayOrderForEachProductImage(Product product) {
+        if (product.getProductImages() != null || !product.getProductImages().isEmpty()) {
+            if (product.getProductImages().size() == 1) {
+                ProductImage productImage = product.getProductImages().getFirst();
+                if (productImage.getDisplayOrder() == null) productImage.setDisplayOrder(1);
+                productImage.setProduct(product);
+                product.setProductImages(List.of(productImage));
+            } else {
+                int i = 0;
+                for (ProductImage productImage : product.getProductImages()) {
+                    if (productImage.getDisplayOrder() == null) {
+                        i++;
+                        productImage.setDisplayOrder(i);
+                    }
+                    productImage.setProduct(product);
+
+                }
+            }
+        }
     }
 }

@@ -15,8 +15,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "local_user")
-@Getter // Apply to all fields by default
-@Setter // Apply to all fields by default
+@Getter
+@Setter
 public class LocalUser implements UserDetails {
 
     @Id
@@ -43,7 +43,7 @@ public class LocalUser implements UserDetails {
     private List<VerificationToken> verificationTokens = new ArrayList<>();
 
     @JsonIgnore
-    @OneToMany(mappedBy = "localUser", cascade = CascadeType.REMOVE, orphanRemoval = true) // Consider REMOVE only or no cascade
+    @OneToMany(mappedBy = "localUser", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private List<Address> addresses = new ArrayList<>();
 
     @JsonIgnore
@@ -56,80 +56,46 @@ public class LocalUser implements UserDetails {
     private List<UserOrder> userOrders = new ArrayList<>();
 
 
-    public void addVerificationToken(VerificationToken token) {
-        this.verificationTokens.add(token);
-        token.setLocalUser(this);
-    }
-
-    public void removeVerificationToken(VerificationToken token) {
-        this.verificationTokens.remove(token);
-        token.setLocalUser(null);
-    }
-
-    public void addAddress(Address address) {
-        this.addresses.add(address);
-        address.setLocalUser(this);
-    }
-
-    public void removeAddress(Address address) {
-        this.addresses.remove(address);
-        address.setLocalUser(null);
-    }
-
-    public void addResetPasswordToken(ResetPasswordToken resetPasswordToken) {
-        this.resetPasswordTokens.add(resetPasswordToken);
-        resetPasswordToken.setLocalUser(this);
-    }
-
-    public void removeResetPasswordToken(ResetPasswordToken resetPasswordToken) {
-        this.resetPasswordTokens.remove(resetPasswordToken);
-        resetPasswordToken.setLocalUser(null);
-    }
-
-    public void addUserOrder(UserOrder order) {
-        this.userOrders.add(order);
-        order.setLocalUser(this);
-    }
-
-    public void removeUserOrder(UserOrder order) {
-        this.userOrders.remove(order);
-        order.setLocalUser(null);
-    }
-
-
-
     @JsonIgnore
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // TODO: Implement roles/authorities if needed for authorization
-        return Collections.emptyList(); // Or a custom empty list implementation
+        return Collections.emptyList();
     }
 
+    @JsonIgnore
     @Override
     public String getPassword() {
         return password;
     }
 
+    @JsonIgnore
     @Override
     public String getUsername() {
         return email; // Email is used as the username for authentication
     }
 
+    @JsonIgnore
     @Override
     public boolean isAccountNonExpired() {
         return true; // TODO: Implement account expiration logic if desired
     }
 
+
+    @JsonIgnore
     @Override
     public boolean isAccountNonLocked() {
         return true; // TODO: Implement account locking logic (e.g., after multiple failed login attempts)
     }
 
+
+    @JsonIgnore
     @Override
     public boolean isCredentialsNonExpired() {
         return true; // TODO: Implement password expiry logic
     }
 
+    @JsonIgnore
     @Override
     public boolean isEnabled() {
         // This is often tied to email verification or an admin-enabled flag

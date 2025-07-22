@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -180,12 +181,20 @@ public class UserService {
     }
 
 
-    public LocalUser getUserByID(Long id) {
-        Optional<LocalUser> opUser = userRepository.findById(id);
-        return opUser.orElse(null);
+    public Optional<LocalUser> getUserByID(Long id) {
+        return userRepository.findById(id);
+
     }
 
     public Optional<LocalUser> getUserByEmail(String email) {
+        return userRepository.findByEmailIgnoreCase(email);
+    }
+
+    public Optional<LocalUser> tryGetCurrentUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal == null) return Optional.empty();
+        String email = (String) principal;
+        if (email.trim().isEmpty()) return Optional.empty();
         return userRepository.findByEmailIgnoreCase(email);
     }
 }

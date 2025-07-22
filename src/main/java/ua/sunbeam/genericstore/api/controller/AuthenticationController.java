@@ -1,11 +1,8 @@
 package ua.sunbeam.genericstore.api.controller;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ua.sunbeam.genericstore.api.model.LoginBody;
@@ -16,6 +13,7 @@ import ua.sunbeam.genericstore.error.*;
 import ua.sunbeam.genericstore.model.ResetPasswordToken;
 import ua.sunbeam.genericstore.service.RPTService;
 import ua.sunbeam.genericstore.service.UserService;
+import ua.sunbeam.genericstore.service.ValidationErrorsParser;
 
 import java.util.Optional;
 

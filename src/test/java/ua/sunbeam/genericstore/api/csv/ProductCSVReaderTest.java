@@ -31,7 +31,7 @@ class ProductCSVReaderTest {
 
     @BeforeEach
     void setUp() {
-        productCSVReader = new ProductCSVReader(productRepository);
+        productCSVReader = new ProductCSVReader();
     }
 
     private MockMultipartFile createMockCsvFile(String content, String filename, String contentType) {

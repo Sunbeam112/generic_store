@@ -5,8 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ua.sunbeam.genericstore.model.Product;
-import ua.sunbeam.genericstore.model.ProductImage;
 import ua.sunbeam.genericstore.service.CsvFileUtil;
+import ua.sunbeam.genericstore.service.InventoryService;
 import ua.sunbeam.genericstore.service.ProductService;
 import ua.sunbeam.genericstore.service.csv.ProductCSVReader;
 import ua.sunbeam.genericstore.service.csv.ProductCSVWriter;
@@ -14,6 +14,7 @@ import ua.sunbeam.genericstore.service.csv.ProductCSVWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,11 +26,13 @@ public class ProductController {
     private final ProductService productService;
     private final ProductCSVReader productCSVReader;
     private final ProductCSVWriter productCSVWriter;
+    private final InventoryService inventoryService;
 
-    public ProductController(ProductService productService, ProductCSVReader productCSVReader, ProductCSVWriter productCSVWriter) {
+    public ProductController(ProductService productService, ProductCSVReader productCSVReader, ProductCSVWriter productCSVWriter, InventoryService inventoryService) {
         this.productService = productService;
         this.productCSVReader = productCSVReader;
         this.productCSVWriter = productCSVWriter;
+        this.inventoryService = inventoryService;
     }
 
 
@@ -41,19 +44,16 @@ public class ProductController {
 
     @GetMapping("/category={input}")
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String input) {
-        Optional<List<Product>> products;
-        products = productService.getAllProductsByCategory(input);
-        return products.map(productList -> new ResponseEntity<>(productList, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        List<Product> products = productService.getAllProductsByCategory(input)
+                .orElse(Collections.emptyList());
+        return new ResponseEntity<>(products, HttpStatus.OK);
     }
+
 
     @GetMapping("/name={input}")
     public ResponseEntity<List<Product>> findAllProductsByName(@PathVariable String input) {
-        List<Product> products;
-        products = productService.getAllProductsByName(input);
-        if (products.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        List<Product> products = productService.getAllProductsByName(input);
+        // It's already returning an empty list if no products, so just return OK
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
@@ -69,19 +69,17 @@ public class ProductController {
 
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         try {
             productService.removeById(id);
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build(); // 500 Internal Server Error
         }
-        return ResponseEntity.ok().build();
-
     }
 
 
     @PostMapping(value = "/add")
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity addProduct(@RequestBody Product product) {
         if (product == null || product.getName() == null || product.getPrice() == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
@@ -90,31 +88,15 @@ public class ProductController {
             return ResponseEntity.badRequest().body("Price must be greater than 0 and name cannot be empty");
         }
         try {
-            if (product.getProductImages() != null || !product.getProductImages().isEmpty()) {
-                if (product.getProductImages().size() == 1) {
-                    ProductImage productImage = product.getProductImages().get(0);
-                    if (productImage.getDisplayOrder() == null) productImage.setDisplayOrder(1);
-                    productImage.setProduct(product);
-                    product.setProductImages(List.of(productImage));
-                } else {
-                    int i = 0;
-                    for (ProductImage productImage : product.getProductImages()) {
-                        if (productImage.getDisplayOrder() == null) {
-                            i++;
-                            productImage.setDisplayOrder(i);
-                        }
-                        productImage.setProduct(product);
-
-                    }
-                }
-            }
+            productService.generateDisplayOrderForEachProductImage(product);
         } catch (NullPointerException e) {
-
+            return ResponseEntity.badRequest().build();
         }
 
         Optional<Product> savedProduct;
         try {
             savedProduct = productService.addProduct(product);
+
             return savedProduct.map(value -> {
                 URI location = URI.create(String.format("/product/id=%d", value.getId()));
                 return ResponseEntity.created(location).body(value);

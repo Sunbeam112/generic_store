@@ -120,7 +120,7 @@ public class RPTService {
 
         // If no tokens or cooldown has passed, generate a new one
         ResetPasswordToken rtp = generateRPT(user);
-        user.addResetPasswordToken(rtp);
+        user.getResetPasswordTokens().add(rtp);
         return rtp;
     }
 

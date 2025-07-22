@@ -1,6 +1,7 @@
 package ua.sunbeam.genericstore.service;
 
 import org.springframework.stereotype.Service;
+import ua.sunbeam.genericstore.error.ProductNotFoundException;
 import ua.sunbeam.genericstore.model.DAO.InventoryRepository;
 import ua.sunbeam.genericstore.model.Inventory;
 import ua.sunbeam.genericstore.model.Product;
@@ -26,34 +27,38 @@ public class InventoryService {
      * and then returns the quantity from its inventory.
      *
      * @param productID The ID of the product.
-     * @return The quantity of the product if found and inventory exists;
-     * -1 if the product ID is invalid or the product is not found;
-     * 0 if the product is found but its inventory information is null.
+     * @return The quantity of the product if found and inventory exists (can be 0 or positive).
+     * @throws IllegalArgumentException If the product ID is null or not a positive number.
+     * @throws ProductNotFoundException If the product with the given ID is not found.
      */
-    public int getProductQuantity(Long productID) {
-        if (productID == null || productID <= 0) return -1;
+    public int getProductQuantity(Long productID) throws ProductNotFoundException, IllegalArgumentException {
+        if (productID == null || productID <= 0) {
+            throw new IllegalArgumentException("Product ID must be a positive number.");
+        }
+
         Optional<Product> product = productService.findById(productID);
-        if (product.isEmpty()) return -1;
-        if (product.get().getInventory() == null) return 0;
+        if (product.isEmpty()) {
+            throw new ProductNotFoundException("Product with ID " + productID + " not found.");
+        }
+
+        if (product.get().getInventory() == null) {
+            System.out.println("inventory is null for " + productID.toString());
+            return 0;
+        }
+
         return product.get().getInventory().getQuantity();
     }
 
 
-    public boolean setItemQuantity(Long productID, int quantity) {
-        if (productID == null || productID < 0) throw new IllegalArgumentException("Bad product ID");
-        Optional<Product> product = productService.findById(productID);
-        if (product.isPresent()) {
-            if (product.get().getInventory() == null) {
-                Inventory inventory = new Inventory();
-                inventory.setProduct(product.get());
-                inventory.setQuantity(quantity);
-                inventoryRepository.save(inventory);
-                return true;
-            }
-            product.get().getInventory().setQuantity(quantity);
-            return true;
-        }
-        throw new IllegalArgumentException("No such product with ID: " + productID);
+    public Inventory add(Inventory inventory) {
+        return inventoryRepository.save(inventory);
+    }
+
+    public void substractItems(Inventory inventory, Integer toSubstract) {
+        if (inventory.getQuantity() - toSubstract < 0)
+            throw new IllegalArgumentException("Can't remove more that exists");
+        inventory.setQuantity(inventory.getQuantity() - toSubstract);
+        inventoryRepository.save(inventory);
     }
 }
 

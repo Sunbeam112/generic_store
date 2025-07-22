@@ -33,12 +33,12 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        String[] allowedToAllPaths = {"/product/all", "/product/name=**", "/product/category=**","/user/me",
+        String[] allowedToAllPaths = /*{"/product/all", "/product/name=**", "/product/category=**", "/user/me",
                 "/product/category/all", "/product/id=**", "/product/importFromCSV**", "/product/importFromCSVAndSave**", "/product/export-csv**", "/auth/v1/register", "/auth/v1/login", "/auth/v1/verify",
-                "/auth/v1/reset_password**", "/auth/v1/forgot_password**", "/admin/inventory/getQuantity"};
-
-        String[] allowedToAdminPaths = {"/product/add", "/product/delete/**", "/product/update/**", "/admin/order/create**", "/admin/order/**"};
-        String[] allowedToUserPaths = {};
+                "/auth/v1/reset_password**", "/auth/v1/forgot_password**", "/admin/inventory/getQuantity"};*/
+                {"**"};
+        String[] allowedToAdminPaths = {};/*"/product/add", "/product/delete/**", "/product/update/**", "/admin/order/create**", "/admin/order/**"*/
+        String[] allowedToUserPaths = {};/*{"/admin/order/create-order"};*/
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -63,7 +63,6 @@ public class WebSecurityConfig {
         return http.build();
     }
 
-    // Custom Authentication Entry Point for unauthenticated users
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> {

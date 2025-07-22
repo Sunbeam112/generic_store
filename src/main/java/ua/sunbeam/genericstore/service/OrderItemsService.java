@@ -1,16 +1,20 @@
 package ua.sunbeam.genericstore.service;
 
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RestController;
 import ua.sunbeam.genericstore.api.model.ProductToOrderBody;
+import ua.sunbeam.genericstore.error.InsufficientStockException;
+import ua.sunbeam.genericstore.error.OrderNotFoundException;
+import ua.sunbeam.genericstore.error.ProductNotFoundException;
 import ua.sunbeam.genericstore.model.DAO.OrderItemsRepository;
 import ua.sunbeam.genericstore.model.OrderItem;
+import ua.sunbeam.genericstore.model.Product;
 import ua.sunbeam.genericstore.model.UserOrder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @Transactional
@@ -28,43 +32,54 @@ public class OrderItemsService {
         this.inventoryService = inventoryService;
     }
 
-    public boolean addItemsToOrder(@Valid @Min.List({@Min(value = 1), @Min(value = 1)}) List<ProductToOrderBody> products, Long orderId, BindingResult result) throws IllegalArgumentException {
-        if (products == null || products.isEmpty()) throw new IllegalArgumentException("Products is null or empty");
-        UserOrder order = orderService.getOrderById(orderId);
-        if (order == null) throw new IllegalArgumentException("No such order");
-        result.getFieldErrors();
-        if (result.hasErrors()) {
-            return false;
+
+    @Transactional
+    public boolean addItemsToOrder(List<ProductToOrderBody> products, Long orderId)
+            throws OrderNotFoundException, ProductNotFoundException, InsufficientStockException, IllegalArgumentException {
+
+        if (products == null || products.isEmpty()) {
+            throw new IllegalArgumentException("Product list cannot be null or empty.");
         }
-        for (ProductToOrderBody product : products) {
-            if (product.getProductID() == null || product.getQuantity() == null)
-                throw new IllegalArgumentException("Product ID or quantity is null");
-            if (product.getProductID() > 0 && product.getQuantity() > 0) {
-                if (productService.findById(product.getProductID()).isEmpty())
-                    throw new IllegalArgumentException("No such product");
-                boolean isInStock = inventoryService.getProductQuantity(product.getProductID()) >= product.getQuantity();
 
-                if (isInStock) {
-                    OrderItem item = new OrderItem();
-                    item.setUserOrder(order);
-                    item.setDispatched(false);
-                    item.setQuantity(product.getQuantity());
-                    item.setProduct(productService.findById(product.getProductID()).get());
-                    orderItemsRepository.save(item);
-                } else {
-                    throw new IllegalArgumentException("Not enough quantity of product");
-                }
+        UserOrder order = orderService.getOrderById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException("Order with ID " + orderId + " not found."));
 
-            } else throw new IllegalArgumentException("Bad product ID or quantity");
+
+        Map<Long, Product> productMap = new HashMap<>();
+
+        for (ProductToOrderBody productToOrder : products) {
+            Product existingProduct = productService.findById(productToOrder.getProductID())
+                    .orElseThrow(() -> new ProductNotFoundException("Product with ID " + productToOrder.getProductID() + " not found."));
+
+            int availableQuantity = (existingProduct.getInventory().getQuantity() == null)
+                    ? 0 : existingProduct.getInventory().getQuantity();
+
+            if (productToOrder.getQuantity() > availableQuantity) {
+                throw new InsufficientStockException("Not enough quantity for product " + productToOrder.getProductID() + ". Available: " + availableQuantity + ", Requested: " + productToOrder.getQuantity());
+            }
+            productMap.put(productToOrder.getProductID(), existingProduct); // Store for later use
+        }
+
+
+        for (ProductToOrderBody productToOrder : products) {
+            Product existingProduct = productMap.get(productToOrder.getProductID());
+
+            OrderItem item = new OrderItem();
+            item.setUserOrder(order);
+            item.setDispatched(false);
+            item.setQuantity(productToOrder.getQuantity());
+            item.setProduct(existingProduct);
+            orderItemsRepository.save(item);
+            inventoryService.substractItems(existingProduct.getInventory(), productToOrder.getQuantity());
         }
         return true;
     }
 
-    public List<OrderItem> getAllOrderItemsByOrderId(Long orderId) {
-        UserOrder order = orderService.getOrderById(orderId);
-        if (order == null) throw new IllegalArgumentException("No such order");
-        List<OrderItem> orderItems;
-        orderItems = orderItemsRepository.getAllOrderItemsByOrderId(order.getId());
-        return orderItems;
+    public List<OrderItem> getAllOrderItemsByOrderId(Long id) throws OrderNotFoundException {
+        Optional<UserOrder> opOrder = orderService.getOrderById(id);
+        if (opOrder.isPresent()) {
+            return opOrder.get().getOrderItems();
+        }
+        throw new OrderNotFoundException("Order " + id.toString() + "was not found!");
     }
 }

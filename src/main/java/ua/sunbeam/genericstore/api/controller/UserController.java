@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ua.sunbeam.genericstore.model.LocalUser;
-import ua.sunbeam.genericstore.service.OrderService;
 import ua.sunbeam.genericstore.service.UserService;
 
 import java.util.Optional;
@@ -17,11 +16,9 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
-    private final OrderService orderService;
 
-    public UserController(UserService userService, OrderService orderService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.orderService = orderService;
     }
 
     /**
