@@ -1,11 +1,9 @@
 package ua.sunbeam.genericstore.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Setter
-@Getter
+@Data
 @Entity
 @Table(name = "address")
 public class Address {

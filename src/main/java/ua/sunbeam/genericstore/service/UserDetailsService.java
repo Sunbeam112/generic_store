@@ -28,6 +28,7 @@ public class UserDetailsService implements org.springframework.security.core.use
         }
         LocalUser user = opUser.get();
         if (Objects.equals(user.getUsername(), "admin@sb.ua")) {
+
             return new org.springframework.security.core.userdetails.User(
                     user.getUsername(), user.getPassword(),
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_ADMIN")));

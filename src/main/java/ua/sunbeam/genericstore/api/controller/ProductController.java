@@ -1,24 +1,19 @@
 package ua.sunbeam.genericstore.api.controller;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ua.sunbeam.genericstore.model.Product;
-import ua.sunbeam.genericstore.model.ProductImage;
+import ua.sunbeam.genericstore.service.CsvFileUtil;
 import ua.sunbeam.genericstore.service.ProductService;
 import ua.sunbeam.genericstore.service.csv.ProductCSVReader;
 import ua.sunbeam.genericstore.service.csv.ProductCSVWriter;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,19 +41,16 @@ public class ProductController {
 
     @GetMapping("/category={input}")
     public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable String input) {
-        Optional<List<Product>> products;
-        products = productService.getAllProductsByCategory(input);
-        return products.map(productList -> new ResponseEntity<>(productList, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        List<Product> products = productService.getAllProductsByCategory(input)
+                .orElse(Collections.emptyList());
+        return new ResponseEntity<>(products, HttpStatus.OK);
     }
+
 
     @GetMapping("/name={input}")
     public ResponseEntity<List<Product>> findAllProductsByName(@PathVariable String input) {
-        List<Product> products;
-        products = productService.getAllProductsByName(input);
-        if (products.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        List<Product> products = productService.getAllProductsByName(input);
+        // It's already returning an empty list if no products, so just return OK
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
@@ -74,34 +66,34 @@ public class ProductController {
 
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Object> deleteProduct(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         try {
             productService.removeById(id);
+            return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build(); // 500 Internal Server Error
         }
-        return ResponseEntity.ok().build();
-
     }
 
 
     @PostMapping(value = "/add")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity addProduct(@RequestBody Product product) {
+    public ResponseEntity<?> addProduct(@RequestBody Product product) {
         if (product == null || product.getName() == null || product.getPrice() == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
         if (product.getName().isEmpty() || product.getPrice() <= 0) {
             return ResponseEntity.badRequest().body("Price must be greater than 0 and name cannot be empty");
         }
-        if (product.getProductImages() != null) {
-            for (ProductImage productImage : product.getProductImages()) {
-                productImage.setProduct(product);
-            }
+        try {
+            productService.generateDisplayOrderForEachProductImage(product);
+        } catch (NullPointerException e) {
+            return ResponseEntity.badRequest().build();
         }
+
         Optional<Product> savedProduct;
         try {
             savedProduct = productService.addProduct(product);
+
             return savedProduct.map(value -> {
                 URI location = URI.create(String.format("/product/id=%d", value.getId()));
                 return ResponseEntity.created(location).body(value);
@@ -147,50 +139,33 @@ public class ProductController {
 
     @GetMapping("/export-csv")
     public ResponseEntity<byte[]> exportProductsToCsv(
-            @RequestParam(name = "directory", required = false) String directoryPath) { // Added parameter
-
-        List<Product> products = (List<Product>) productService.getAllProducts();
-
-        String fileName = "products_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".csv";
-
-        Path saveDirectory;
-        if (directoryPath != null && !directoryPath.trim().isEmpty()) {
-            saveDirectory = Paths.get(directoryPath);
-            // Ensure the directory exists, create if not
-            try {
-                Files.createDirectories(saveDirectory);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return ResponseEntity.internalServerError().body(("Error creating directory: " + e.getMessage()).getBytes());
-            }
-        } else {
-
-            saveDirectory = Paths.get(System.getProperty("java.io.tmpdir"));
-        }
-
-        Path filePathToSave = saveDirectory.resolve(fileName); // Resolve the full path
-
+            @RequestParam(name = "directory", required = false) String directoryPath) {
+        Path filePath = null;
         try {
+            List<Product> products = productService.getAllProducts();
+            String fileName = CsvFileUtil.generateCsvFileName();
+            filePath = CsvFileUtil.determineAndCreateSaveDirectory(directoryPath, fileName);
 
-            productCSVWriter.writeToCSV(filePathToSave.toString(), products);
+            productCSVWriter.writeToCSV(filePath.toString(), products);
 
+            byte[] csvBytes = CsvFileUtil.readAllBytes(filePath);
 
-            byte[] csvBytes = Files.readAllBytes(filePathToSave);
-
-            Files.delete(filePathToSave);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("text/csv"));
-            headers.setContentDispositionFormData("attachment", fileName);
-            headers.setContentLength(csvBytes.length);
-
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(csvBytes);
+            return CsvFileUtil.buildCsvResponse(csvBytes, fileName);
 
         } catch (IOException e) {
             e.printStackTrace();
-            return ResponseEntity.internalServerError().body(("Error exporting products: " + e.getMessage()).getBytes());
+            return ResponseEntity.internalServerError().body(("Error during product CSV export: " + e.getMessage()).getBytes());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(("An unexpected error occurred: " + e.getMessage()).getBytes());
+        } finally {
+            if (filePath != null) {
+                try {
+                    CsvFileUtil.deleteFile(filePath);
+                } catch (IOException e) {
+                    System.err.println("Failed to delete temporary CSV file: " + filePath + " - " + e.getMessage());
+                }
+            }
         }
     }
 }

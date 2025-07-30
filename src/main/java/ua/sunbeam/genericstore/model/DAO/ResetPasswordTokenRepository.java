@@ -10,4 +10,6 @@ public interface ResetPasswordTokenRepository extends CrudRepository<ResetPasswo
 
     @Override
     boolean existsById(Long aLong);
+
+    void flush();
 }

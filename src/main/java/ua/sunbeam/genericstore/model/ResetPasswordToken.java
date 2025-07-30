@@ -2,15 +2,12 @@ package ua.sunbeam.genericstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.sql.Timestamp;
 
-@Setter
-@Getter
+@Data
 @Entity
 @Table(name = "reset_password_token")
 public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
@@ -23,8 +20,8 @@ public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
     private Timestamp expiryDateInMilliseconds;
 
     @JsonIgnore
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "local_user_id")
+    @ManyToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "local_user_id", nullable = false)
     private LocalUser localUser;
 
     @Column(name = "token", nullable = false, unique = true, length = 1024)
@@ -43,5 +40,5 @@ public class ResetPasswordToken implements Comparable<ResetPasswordToken> {
 
         return getExpiryDateInMilliseconds().compareTo(rpt.getExpiryDateInMilliseconds());
     }
-    
+
 }

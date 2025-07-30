@@ -120,7 +120,7 @@ public class RPTService {
 
         // If no tokens or cooldown has passed, generate a new one
         ResetPasswordToken rtp = generateRPT(user);
-        user.addResetPasswordToken(rtp);
+        user.getResetPasswordTokens().add(rtp);
         return rtp;
     }
 
@@ -143,11 +143,7 @@ public class RPTService {
                 return false;
             }
             LocalUser user = opToken.get().getLocalUser();
-            if (user == null || !user.isEmailVerified()) {
-                return false;
-            }
-
-            return true;
+            return user != null && user.isEmailVerified();
         }
 
 

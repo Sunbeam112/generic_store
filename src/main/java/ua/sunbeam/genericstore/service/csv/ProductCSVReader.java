@@ -6,7 +6,6 @@ import org.apache.commons.csv.CSVRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ua.sunbeam.genericstore.error.CsvProcessingException;
-import ua.sunbeam.genericstore.model.DAO.ProductRepository;
 import ua.sunbeam.genericstore.model.Product;
 import ua.sunbeam.genericstore.model.ProductImage; // Import ProductImage
 
@@ -20,11 +19,6 @@ import java.util.stream.Collectors;
 @Service
 public class ProductCSVReader {
 
-    private final ProductRepository productRepository;
-
-    public ProductCSVReader(ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
 
     public List<Product> importProductsFromCSV(MultipartFile file) throws CsvProcessingException, IllegalArgumentException {
         validateFile(file);
@@ -96,7 +90,7 @@ public class ProductCSVReader {
         }
     }
 
-    private List<Product> parseAndMapProducts(CSVParser csvParser) throws IOException, NumberFormatException {
+    private List<Product> parseAndMapProducts(CSVParser csvParser) throws NumberFormatException {
         List<Product> products = new ArrayList<>();
         int recordNumber = 0;
         for (CSVRecord csvRecord : csvParser) {
@@ -121,11 +115,13 @@ public class ProductCSVReader {
                 if (productImageUrlsString != null && !productImageUrlsString.trim().isEmpty()) {
                     String[] imageUrls = productImageUrlsString.split(CSVUtils.PRODUCT_IMAGE_URL_DELIMITER);
                     List<ProductImage> productImages = new ArrayList<>();
+                    int displayOrder = 1;
                     for (String url : imageUrls) {
                         if (!url.trim().isEmpty()) {
                             ProductImage productImage = new ProductImage();
                             productImage.setImageUrl(url.trim());
                             productImage.setProduct(product);
+                            if (productImage.getDisplayOrder() == null) productImage.setDisplayOrder(displayOrder++);
                             productImages.add(productImage);
                         }
                     }
