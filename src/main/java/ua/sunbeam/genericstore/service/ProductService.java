@@ -178,7 +178,7 @@ public class ProductService {
     }
 
     public void generateDisplayOrderForEachProductImage(Product product) {
-        if (product.getProductImages() != null || !product.getProductImages().isEmpty()) {
+        if (product.getProductImages() != null && !product.getProductImages().isEmpty()) {
             if (product.getProductImages().size() == 1) {
                 ProductImage productImage = product.getProductImages().getFirst();
                 if (productImage.getDisplayOrder() == null) productImage.setDisplayOrder(1);

@@ -7,11 +7,9 @@ import lombok.*;
 import java.sql.Timestamp;
 import java.util.List;
 
+@Data
 @Entity
 @Table(name = "user_order")
-@Getter
-@Setter
-@ToString
 public class UserOrder {
 
     @Id

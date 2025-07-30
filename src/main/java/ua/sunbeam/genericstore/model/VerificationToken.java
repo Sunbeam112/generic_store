@@ -1,15 +1,13 @@
 package ua.sunbeam.genericstore.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import java.sql.Timestamp;
 
+@Data
 @Entity
 @Table(name = "verification_token")
-@Setter
-@Getter
 public class VerificationToken {
 
     @Id

@@ -2,8 +2,7 @@ package ua.sunbeam.genericstore.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,10 +12,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@Data
 @Entity
 @Table(name = "local_user")
-@Getter
-@Setter
 public class LocalUser implements UserDetails {
 
     @Id
